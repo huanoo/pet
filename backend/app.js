@@ -82,7 +82,7 @@ let poolConfig = {
   port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
   user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
   password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '123456',
-  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'gentlepet_db',
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME || (process.env.RAILWAY_ENVIRONMENT ? 'railway' : 'gentlepet_db'),
   charset: 'utf8mb4',
   waitForConnections: true,
   connectionLimit: 20,
