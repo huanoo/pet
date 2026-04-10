@@ -960,7 +960,7 @@
         async function loadUserScore() {
             try {
                 const token = localStorage.getItem('petx_token') || '';
-                const res = await fetch('http://127.0.0.1:3000/api/user/score', {
+                const res = await fetch('https://pet-production-28ba.up.railway.app/api/user/score', {
                     headers: { 'x-auth-token': token },
                     credentials: 'include'
                 });
@@ -984,7 +984,7 @@
         async function initCheckLogin() {
         try {
             const token = localStorage.getItem('petx_token') || '';
-            const response = await fetch('http://127.0.0.1:3000/api/checkLogin', {
+            const response = await fetch('https://pet-production-28ba.up.railway.app/api/checkLogin', {
                 method: 'GET',
                 headers: { 'x-auth-token': token },
                 credentials: 'include' // 携带登录态Cookie
@@ -1015,7 +1015,7 @@
         // 渲染公告 (Fetching from server)
         async function renderUserAnnouncement() {
             try {
-                const res = await fetch('http://127.0.0.1:3000/api/announcements');
+                const res = await fetch('https://pet-production-28ba.up.railway.app/api/announcements');
                 const json = await res.json();
                 
                 if (json.code === 200) {
@@ -1172,7 +1172,7 @@
         // ✅ 从后端加载宠物数据
         async function loadPetsFromServer() {
             const token = localStorage.getItem('petx_token') || '';
-            const res = await fetch('http://127.0.0.1:3000/api/myPets', {
+            const res = await fetch('https://pet-production-28ba.up.railway.app/api/myPets', {
                 headers: { 'x-auth-token': token },
                 credentials: 'include'
             });
@@ -1332,7 +1332,7 @@
 
             try {
                 const token = localStorage.getItem('petx_token') || '';
-                const res = await fetch('http://127.0.0.1:3000/api/savePet', {
+                const res = await fetch('https://pet-production-28ba.up.railway.app/api/savePet', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -1386,7 +1386,7 @@
             card.addEventListener('click', async function(e) {
                 try {
                     const token = localStorage.getItem('petx_token') || '';
-                    const response = await fetch('http://127.0.0.1:3000/api/checkLogin', {
+                    const response = await fetch('https://pet-production-28ba.up.railway.app/api/checkLogin', {
                         method: 'GET',
                         headers: { 'x-auth-token': token },
                         credentials: 'include'
