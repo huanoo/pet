@@ -78,17 +78,16 @@ let dbConnected = false;
 
 // 增强的数据库连接池配置
 const poolConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '123456',
-  database: process.env.DB_NAME || 'gentlepet_db',
+  host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+  port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
+  user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+  password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '123456',
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'gentlepet_db',
   charset: 'utf8mb4',
   waitForConnections: true,
   connectionLimit: 20, // 增加连接池大小
   queueLimit: 0,
   connectTimeout: 10000, // 连接超时时间
-  acquireTimeout: 10000, // 获取连接超时时间
   idleTimeout: 30000, // 空闲连接超时时间
   enableKeepAlive: true, // 启用连接保活
   keepAliveInitialDelay: 10000 // 保活初始延迟
@@ -1630,6 +1629,11 @@ app.post('/api/agent/chat', checkLogin, async (req, res) => {
   }
 });
 
+// 根路径重定向到登录页面
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
+
 // 等待数据库初始化完成后再启动服务器
 const startServer = () => {
   app.listen(port, () => {
@@ -2493,10 +2497,3 @@ const checkInterval = setInterval(() => {
     startServer();
   }
 }, 100);
-// 根路径重定向到登录页面
-app.get('/', (req, res) => {
-  res.redirect('/login.html');
-});
-
-// 启动服务器
-startServer();
