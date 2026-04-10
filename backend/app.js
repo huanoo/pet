@@ -583,7 +583,7 @@ app.post('/api/login', async (req, res) => {
       return res.json({ 
         code: 200, 
         msg: '登录成功（假数据模式）',
-        data: { communityId: user.community_id, token, userType: user.user_type, name: user.user_name }
+        data: { communityId: user.community_id, token, userType: user.user_type, name: user.name }
       });
     }
     
@@ -592,13 +592,13 @@ app.post('/api/login', async (req, res) => {
       [tel, userType]
     );
     const user = rows[0];
-    if (!user || !(await verifyPwd(pwd, user.pwd))) {
+    if (!user || !(await verifyPwd(pwd, user.password))) {
       return res.json({ code: -1, msg: '账号或密码错误' });
     }
     
     const loginState = {
       tel: user.tel,
-      name: user.user_name,
+      name: user.name,
       type: user.user_type,
       id: user.id,
       communityId: user.community_id
