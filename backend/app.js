@@ -82,7 +82,7 @@ let poolConfig = {
   port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
   user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
   password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '123456',
-  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'railway',
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'gentlepet_db',
   charset: 'utf8mb4',
   waitForConnections: true,
   connectionLimit: 20,
@@ -140,7 +140,30 @@ try {
 if (pool) {
   (async () => {
     try {
-      // 1. 公告表
+      // 1. 社区表
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS community (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // 2. 用户表
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(50) NOT NULL,
+          tel VARCHAR(20) NOT NULL UNIQUE,
+          password VARCHAR(100) NOT NULL,
+          user_type VARCHAR(10) NOT NULL DEFAULT 'user',
+          community_id INT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (community_id) REFERENCES community(id)
+        )
+      `);
+
+      // 3. 公告表
       await pool.query(`
         CREATE TABLE IF NOT EXISTS announcements (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -152,7 +175,7 @@ if (pool) {
         )
       `);
 
-      // 2. 地图相关表 (新增)
+      // 4. 地图相关表 (新增)
       await pool.query(`
         CREATE TABLE IF NOT EXISTS map_layers (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -236,6 +259,89 @@ if (pool) {
           );
         }
         console.log('🗺️ 地图数据初始化完成');
+      }
+
+      // 5. 宠物表
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS pets (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          pet_name VARCHAR(50) NOT NULL,
+          pet_breed VARCHAR(50),
+          pet_age VARCHAR(20),
+          pet_vaccine VARCHAR(20),
+          pet_cert_id VARCHAR(100),
+          pet_register_time DATETIME,
+          pet_avatar VARCHAR(255),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+
+      // 6. 宠物文明分表
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS pet_civilization_score (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          community_id INT,
+          base_score DECIMAL(5,2) DEFAULT 100.00,
+          bonus_score DECIMAL(5,2) DEFAULT 0.00,
+          leash_deduction DECIMAL(5,2) DEFAULT 0.00,
+          vaccine_deduction DECIMAL(5,2) DEFAULT 0.00,
+          cert_deduction DECIMAL(5,2) DEFAULT 0.00,
+          feces_deduction DECIMAL(5,2) DEFAULT 0.00,
+          noise_deduction DECIMAL(5,2) DEFAULT 0.00,
+          public_area_deduction DECIMAL(5,2) DEFAULT 0.00,
+          vomit_deduction DECIMAL(5,2) DEFAULT 0.00,
+          fierce_dog_deduction DECIMAL(5,2) DEFAULT 0.00,
+          attack_deduction DECIMAL(5,2) DEFAULT 0.00,
+          other_deduction DECIMAL(5,2) DEFAULT 0.00,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (community_id) REFERENCES community(id)
+        )
+      `);
+
+      // 7. 违规记录表
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS violations (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          community_id INT,
+          type VARCHAR(50) NOT NULL,
+          description TEXT,
+          deduction DECIMAL(5,2) NOT NULL,
+          status VARCHAR(20) DEFAULT 'pending',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (community_id) REFERENCES community(id)
+        )
+      `);
+
+      // 初始化默认社区数据
+      const [communityCheck] = await pool.query('SELECT COUNT(*) as count FROM community');
+      if (communityCheck[0].count === 0) {
+        await pool.query(`
+          INSERT INTO community (name) VALUES 
+          ('阳光花园小区'),
+          ('翠湖天地社区'),
+          ('金色家园小区'),
+          ('紫云苑社区'),
+          ('绿城小区')
+        `);
+        console.log('🏘️ 社区数据初始化完成');
+      }
+
+      // 初始化默认管理员账号
+      const [adminCheck] = await pool.query('SELECT COUNT(*) as count FROM users WHERE user_type = ?', ['admin']);
+      if (adminCheck[0].count === 0) {
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        await pool.query(
+          'INSERT INTO users (name, tel, password, user_type, community_id) VALUES (?, ?, ?, ?, ?)',
+          ['管理员', '12345678900', hashedPassword, 'admin', 1]
+        );
+        console.log('👤 管理员账号初始化完成');
       }
 
       dbConnected = true;
