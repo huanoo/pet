@@ -5,7 +5,7 @@
 
 const API_CONFIG = {
     // 后端 API 基础地址
-    BASE_URL: 'http://127.0.0.1:3000/api',
+    BASE_URL: 'https://pet-production-28ba.up.railway.app/api',
     
     // 常用 API 端点
     ENDPOINTS: {
