@@ -76,22 +76,46 @@ app.use(cors({
 let pool;
 let dbConnected = false;
 
-// 增强的数据库连接池配置
-const poolConfig = {
+// 解析 DATABASE_URL 环境变量
+let poolConfig = {
   host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
   port: Number(process.env.MYSQLPORT || process.env.DB_PORT || 3306),
   user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
   password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '123456',
-  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'gentlepet_db',
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'railway',
   charset: 'utf8mb4',
   waitForConnections: true,
-  connectionLimit: 20, // 增加连接池大小
+  connectionLimit: 20,
   queueLimit: 0,
-  connectTimeout: 10000, // 连接超时时间
-  idleTimeout: 30000, // 空闲连接超时时间
-  enableKeepAlive: true, // 启用连接保活
-  keepAliveInitialDelay: 10000 // 保活初始延迟
+  connectTimeout: 10000,
+  idleTimeout: 30000,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 };
+
+// 检查是否存在 DATABASE_URL 环境变量
+if (process.env.DATABASE_URL) {
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    poolConfig = {
+      host: url.hostname,
+      port: Number(url.port || 3306),
+      user: url.username,
+      password: url.password,
+      database: url.pathname.substring(1), // 移除开头的 "/"
+      charset: 'utf8mb4',
+      waitForConnections: true,
+      connectionLimit: 20,
+      queueLimit: 0,
+      connectTimeout: 10000,
+      idleTimeout: 30000,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000
+    };
+  } catch (e) {
+    console.warn('⚠️ 解析 DATABASE_URL 失败，使用默认配置');
+  }
+}
 
 try {
   pool = mysql.createPool(poolConfig);
