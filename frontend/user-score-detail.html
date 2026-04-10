@@ -211,7 +211,7 @@
         async function loadScoreDetail() {
             try {
                 const token = localStorage.getItem('petx_token') || '';
-                const res = await fetch('http://localhost:3000/api/user/score', {
+                const res = await fetch('https://pet-production-28ba.up.railway.app/api/user/score', {
                     headers: { 'x-auth-token': token },
                     credentials: 'include'
                 });
