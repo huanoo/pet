@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Launch Login Page",
+      "url": "http://localhost:5500/frontend/login.html",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Launch Admin Page",
+      "url": "http://localhost:5500/frontend/admin.html",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Launch User Page",
+      "url": "http://localhost:5500/frontend/user.html",
+      "webRoot": "${workspaceFolder}"
+    }
+  ]
+}

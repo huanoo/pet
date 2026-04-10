@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社区文明系数 - 管理员后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#9A482A', 
+                        secondary: '#F8E9D8',
+                        accent: '#E68A48',
+                        success: '#10B981', 
+                        warning: '#F59E0B', 
+                        danger: '#EF4444',
+                        neutral: { 50: '#F9FAFB', 100: '#F3F4F6', 200: '#E5E7EB', 300: '#D1D5DB' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; letter-spacing: 0.5px; }
+        .cute-font { font-family: "ZCOOL KuaiLe", "Microsoft YaHei", sans-serif !important; }
+        .progress-bar { height: 8px; background-color: #eee; border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+        .progress-bar .progress { height: 100%; border-radius: 4px; background-color: #9A482A; }
+        .up { color: #10B981; }
+        .down { color: #EF4444; }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+</head>
+<body class="bg-neutral-50 min-h-screen">
+    <!-- 导航栏 -->
+<nav class="bg-[#9A482A] shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border-2 border-[#7c3c22]">
+                    <!-- 匹配参考代码的小狗图标（fa-solid） -->
+                    <i class="fa-solid fa-dog text-[#9A482A] text-2xl"></i>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- 匹配参考代码的文字组合 + 爪印emoji -->
+                    <span class="text-2xl font-bold text-white cute-font">PetX</span>
+                    <span class="text-white text-sm">🐾</span>
+                    <span class="text-xl font-medium text-[#F8E9D8] cute-font">管理后台</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-6">
+                <!-- 新增管理员信息区域（完全匹配参考代码样式） -->
+                <div class="flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-user-circle text-[#F8E9D8] text-xl"></i>
+                    <span class="cute-font">管理员</span>
+                </div>
+                <!-- 保留原有跳转功能（admin.html），样式完全匹配参考代码 -->
+                <button onclick="window.location.href='admin.html'" 
+                        class="py-2 px-5 rounded-full bg-white text-[#9A482A] font-medium cute-font hover:bg-[#F8E9D8] hover:shadow-lg transition-all duration-300 flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>返回首页</span>
+                    <span class="text-xs">🐾</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+    <!-- 主内容区 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- 视图1：社区列表概览 -->
+<div id="community-list-view">
+    <div class="mb-8">
+        <div class="mb-4">
+            <!-- 标题行：纯居中显示（匹配参考代码布局） -->
+            <div class="relative">
+                <h2 class="text-3xl font-bold text-[#A65233] flex items-center justify-center gap-2 cute-font" style="letter-spacing: 2px;">
+                    <i class="fa-solid fa-city text-[#E68A48]"></i>
+                    各社区文明系数一览
+                </h2>
+            </div>
+            
+            <!-- 副标题：居中显示（匹配参考代码样式） -->
+            <p class="text-gray-500 cute-font text-center mb-4">点击卡片查看详细维度分析</p>
+        </div>
+    </div>
+
+    <div id="community-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 动态加载社区卡片 -->
+                <div class="col-span-full text-center py-12">
+                    <div class="spinner mx-auto mb-4" style="border: 4px solid #f3f3f3; border-top: 4px solid #9A482A; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+                    <p class="text-gray-400 cute-font">加载社区数据中...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 视图2：社区详细分析 (默认隐藏) -->
+        <div id="community-detail-view" class="hidden">
+            <!-- 头部导航 -->
+            <div class="flex items-center gap-4 mb-6">
+                <button onclick="switchView('list')" class="px-4 py-2 bg-white border border-[#A65233]/20 text-[#A65233] rounded-lg hover:bg-[#FFF8F3] transition cute-font">
+                    <i class="fa fa-arrow-left"></i> 返回列表
+                </button>
+                <h2 class="text-2xl font-bold text-[#A65233] cute-font" id="detail-title">社区详情</h2>
+            </div>
+
+            <!-- 统计卡片（社区文明核心指数） -->
+<div class="flex items-center justify-center mb-8">
+    <!-- 左侧装饰图片：等比例放大至220px（原180px）+ 位置贴近方框 -->
+    <img src="图片/社区评分1.jpg" alt="宠物装饰图" 
+         class="h-auto max-h-full w-[220px] object-cover flex-shrink-0 self-center"
+         style="transform: translateX(15px) !important; display: block !important;">
+    
+    <!-- 核心卡片：500px加宽版，保留所有功能 -->
+    <div class="card relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 w-[500px] mx-auto z-10"
+         style="border: 4px solid #9A482A; border-radius: 1rem; box-sizing: border-box;">
+        <!-- 标题区块：保留原有样式 -->
+        <div class="bg-[#9A482A] py-4 px-6 text-center" style="border-radius: calc(1rem - 4px) calc(1rem - 4px) 0 0;">
+            <h3 class="text-lg font-bold text-white mb-0 flex items-center justify-center gap-2 cute-font">
+                <i class="fa fa-star text-white"></i>
+                社区文明核心指数
+                <i class="fa fa-star text-white"></i>
+            </h3>
+        </div>
+        
+        <!-- 文明系数核心模块：保留所有功能ID和样式 -->
+        <div class="p-8 text-center" style="background-color: #F5E9E0; border-radius: 0 0 calc(1rem - 4px) calc(1rem - 4px);">
+            <div class="text-6xl font-bold text-[#9A482A] mb-2 cute-font" id="main-score">-</div>
+            <div class="text-[#9A482A]/70 text-lg mb-4 cute-font">当前社区文明综合系数（满分100）</div>
+            <span class="inline-block px-6 py-2 bg-[#E68A48]/10 text-[#9A482A] rounded-full text-sm font-bold border border-[#E68A48]/20" id="score-level-container">
+                <i class="fa fa-smile"></i> <span id="score-level">评级加载中</span>
+            </span>
+        </div>
+    </div>
+    
+    <!-- 右侧装饰图片：等比例放大至220px（原180px）+ 位置贴近方框 -->
+    <img src="图片/社区评分2.jpg" alt="宠物装饰图" 
+         class="h-auto max-h-full w-[220px] object-cover flex-shrink-0 self-center"
+         style="transform: translateX(-15px) !important; display: block !important;">
+</div>
+
+   
+         <!-- 文明维度细分 -->
+<div class="card p-6 relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden mb-8"
+     style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+    <!-- 背景宠物爪印装饰：右下角浅棕风格 -->
+    <div class="absolute bottom-0 right-0 text-[#D4B190]/20 z-0">
+        <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+        <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4 absolute top-0 left-0 text-[#D4B190]/30"></i>
+    </div>
+    
+    <!-- 标题栏：统一焦糖红棕色风格 -->
+    <h3 class="text-xl font-bold text-[#A65233] mb-6 relative z-10 flex items-center justify-start gap-3 cute-font">
+        <i class="fa fa-bar-chart text-[#E68A48]"></i>
+        文明维度细分
+    </h3>
+    
+    <!-- 网格容器：改为浅棕色背景，保留其他样式 -->
+    <div class="bg-[#F5E9E0]/80 rounded-sm p-3 relative z-10 backdrop-blur-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10" id="dimensions-container">
+            <!-- 动态加载区域（保留原有逻辑） -->
+        </div>
+    </div>
+</div>
+
+
+           <!-- 趋势表格 -->
+<div class="card p-6 relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden mb-8"
+     style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+    <!-- 背景宠物爪印装饰：右下角浅棕风格 -->
+    <div class="absolute bottom-0 right-0 text-[#D4B190]/20 z-0">
+        <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+        <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4 absolute top-0 left-0 text-[#D4B190]/30"></i>
+    </div>
+    
+    <!-- 标题栏：统一焦糖红棕色风格 -->
+    <h3 class="text-xl font-bold text-[#A65233] mb-6 relative z-10 flex items-center justify-start gap-3 cute-font">
+        <i class="fa fa-line-chart text-[#E68A48]"></i>
+        近6个月文明系数趋势
+    </h3>
+    
+    <!-- 表格容器：改为浅棕色背景，保留其他样式 -->
+    <div class="overflow-x-auto bg-[#F5E9E0]/80 rounded-sm p-3 relative z-10 backdrop-blur-sm">
+        <table class="min-w-full divide-y divide-[#A65233]/10">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 text-left text-sm font-bold text-[#A65233] uppercase tracking-wider cute-font">月份</th>
+                    <th class="px-6 py-3 text-left text-sm font-bold text-[#A65233] uppercase tracking-wider cute-font">文明系数</th>
+                    <th class="px-6 py-3 text-left text-sm font-bold text-[#A65233] uppercase tracking-wider cute-font">环比变化</th>
+                    <th class="px-6 py-3 text-left text-sm font-bold text-[#A65233] uppercase tracking-wider cute-font">主要影响因素</th>
+                </tr>
+            </thead>
+            <tbody class="bg-[#F5E9E0]/90 divide-y divide-[#A65233]/10" id="trend-table-body">
+                <!-- 动态加载区域（保留原有逻辑） -->
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+</main>
+
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:3000/api';
+
+        async function checkLogin() {
+            try {
+                const token = localStorage.getItem('petx_token') || '';
+                const res = await fetch(`${API_BASE}/checkLogin`, { 
+                    headers: { 'x-auth-token': token },
+                    credentials: 'include' 
+                });
+                const json = await res.json();
+                if (json.code !== 200 || json.data.type !== 'admin') {
+                    alert('请先以管理员身份登录');
+                    window.location.href = 'login.html';
+                }
+            } catch (e) {
+                console.error(e);
+                window.location.href = 'login.html';
+            }
+        }
+
+        // 切换视图
+        function switchView(viewName) {
+            const listView = document.getElementById('community-list-view');
+            const detailView = document.getElementById('community-detail-view');
+            
+            if (viewName === 'list') {
+                listView.classList.remove('hidden');
+                detailView.classList.add('hidden');
+                loadCommunityList(); // 刷新列表
+            } else {
+                listView.classList.add('hidden');
+                detailView.classList.remove('hidden');
+            }
+        }
+
+        // 加载社区列表
+async function loadCommunityList() {
+    const container = document.getElementById('community-grid');
+    try {
+        const token = localStorage.getItem('petx_token') || '';
+        const res = await fetch(`${API_BASE}/admin/communityListStats`, {
+            headers: { 'x-auth-token': token },
+            credentials: 'include'
+        });
+        const json = await res.json();
+        
+        if (json.code === 200) {
+            container.innerHTML = json.data.map(c => `
+                <div onclick="loadDetailData(${c.id})" 
+                     class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-4 border-[#9A482A] overflow-hidden relative group cursor-pointer"
+                     style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/1);">
+                    <!-- 狗爪背景装饰：匹配目标代码风格 -->
+                    <div class="absolute bottom-0 right-0 text-[#D4B190]/10 z-0">
+                        <i class="fa-solid fa-paw text-[120px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+                    </div>
+                    
+                    <!-- 右上角装饰块：匹配目标代码风格 -->
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-[#A65233]/5 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-150 z-0"></div>
+                    
+                    <!-- 渐变遮罩：保留原有逻辑，调整层级 -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#A65233]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-0"></div>
+                    
+                    <!-- 内容容器：相对定位，层级高于背景 -->
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800 cute-font group-hover:text-[#A65233] transition-colors">${c.name}</h3>
+                                <p class="text-xs text-gray-500 mt-1 cute-font">注册住户：${c.userCount}人</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-[#FFF8F3] flex items-center justify-center text-[#E68A48]">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-end gap-2 mb-2">
+                            <span class="text-4xl font-bold text-[#A65233] cute-font">${c.score}</span>
+                            <span class="text-sm text-gray-400 mb-1 cute-font">/ 100</span>
+                        </div>
+                        
+                        <!-- 进度条：匹配目标代码风格 -->
+                        <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mb-3">
+                            <div class="bg-[#A65233] h-full rounded-full transition-all duration-1000" style="width: ${c.score}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-center text-red-500 col-span-full">加载失败，请刷新重试</p>';
+    }
+}
+
+// 加载详情数据
+async function loadDetailData(communityId) {
+    // 先切换视图
+    switchView('detail');
+    // 显示加载状态
+    document.getElementById('main-score').innerText = '...';
+    
+    try {
+        const token = localStorage.getItem('petx_token') || '';
+        const res = await fetch(`${API_BASE}/admin/communityCivilizationStats?communityId=${communityId}`, {
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-auth-token': token
+            },
+            credentials: 'include'
+        });
+        const json = await res.json();
+        if (json.code === 200) {
+            const d = json.data;
+            document.getElementById('detail-title').innerText = `${d.name} - 详细分析`;
+            document.getElementById('main-score').innerText = d.score;
+            document.getElementById('score-level').innerText = d.level;
+
+            // 渲染维度
+            const dimContainer = document.getElementById('dimensions-container');
+            const icons = ['leash', 'trash', 'users', 'gavel'];
+            dimContainer.innerHTML = d.dimensions.map((item, index) => `
+                <div class="bg-[#FFF8F3] p-6 rounded-xl border border-[#A65233]/10 hover:shadow-md transition">
+                    <h3 class="text-[#A65233] font-bold mb-3 flex items-center gap-2 cute-font">
+                        <i class="fa fa-${icons[index] || 'star'} text-[#E68A48]"></i> ${item.name}
+                    </h3>
+                    <div class="progress-bar bg-[#E68A48]/10">
+                        <div class="progress bg-[#A65233]" style="width: ${item.score}%;"></div>
+                    </div>
+                    <div class="text-sm text-[#A65233]/80 flex justify-between cute-font">
+                        <span>得分：${item.score}</span>
+                        <span class="${item.trend === 'up' ? 'text-[#10B981]' : 'text-[#EF4444]'}">环比 ${item.change > 0 ? '↑' : '↓'}${Math.abs(item.change)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // 渲染趋势表格
+            const tbody = document.getElementById('trend-table-body');
+            tbody.innerHTML = d.trend.map(item => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-800 font-medium cute-font">${item.month}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-[#A65233] font-bold cute-font">${item.score}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${item.change.includes('↑') ? 'text-[#10B981]' : 'text-[#EF4444]'} font-bold cute-font">${item.change}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-600 cute-font">${item.reason}</td>
+                </tr>
+            `).join('');
+        }
+    } catch (e) {
+        console.error('加载详情失败', e);
+        alert('加载详情失败');
+        switchView('list');
+    }
+}
+
+// 初始化
+checkLogin();
+loadCommunityList();
+    </script>
+    <script src="agent-widget.js"></script>
+    <script src="page-transition.js"></script>
+</body>
+</html>

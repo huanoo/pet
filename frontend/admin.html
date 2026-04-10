@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetX - 文明养宠智慧管理平台-管理后台</title>
+    <!-- 高德地图安全配置 - 必须在加载 API 脚本之前 -->
+    <script>
+        window._AMapSecurityConfig = {
+            securityJsCode: '7a2771a0130711b658e9e8cccc5126a6', 
+        };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#9A482A', 
+                        secondary: '#F8E9D8',
+                        accent: '#E68A48',
+                        success: '#10B981', 
+                        warning: '#F59E0B', 
+                        danger: '#EF4444',
+                        neutral: { 50: '#F9FAFB', 100: '#F3F4F6', 200: '#E5E7EB', 300: '#D1D5DB' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; letter-spacing: 0.5px; }
+        .cute-font { font-family: "ZCOOL KuaiLe", "Microsoft YaHei", sans-serif !important; }
+        .msg-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 8px; color: white; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: 'ZCOOL KuaiLe', sans-serif; }
+        .clickable-card { cursor: pointer; transition: all 0.3s ease; }
+        .clickable-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(154, 72, 42, 0.15); }
+        .civilization-chart-canvas { width: 100% !important; height: 300px !important; }
+        .status-pending { background: #fff7ed; color: #9a3412; border: 1px solid #ffedd5; }
+        .status-processing { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
+        .status-completed { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
+        .status-rejected { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #9A482A; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* 表格样式优化 */
+        th { font-family: 'ZCOOL KuaiLe', sans-serif; color: #9A482A; font-size: 15px; }
+        td { font-family: 'Microsoft YaHei', sans-serif; }
+        
+        /* 模态框样式 */
+        .modal-content {
+            border: 3px solid #A65233;
+            border-radius: 12px;
+            box-shadow: 0 0 0 2px #E68A48, 0 4px 12px rgba(166,82,51,0.15);
+            background-color: white;
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.3s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translate(0, 20px); }
+            to { opacity: 1; transform: translate(0, 0); }
+        }
+    </style>
+    <!-- 引入PetX同款可爱字体 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+</head>
+<body class="bg-neutral-50 min-h-screen">
+    <div class="msg-toast" id="msg-toast"></div>
+
+ <!-- 导航栏 -->
+<nav class="bg-[#9A482A] shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- 加高导航栏，保持元素垂直居中 -->
+        <div class="flex justify-between h-20 items-center">
+            <!-- 左侧：保留原有图标容器，新增小狗爪表情 -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border-2 border-[#7c3c22]">
+                    <i class="fa fa-dog text-[#9A482A] text-2xl"></i>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-white cute-font">PetX</span>
+                    <span class="text-white text-sm">🐾</span>
+                    <span class="text-xl font-medium text-[#F8E9D8] cute-font">管理后台</span>
+                </div>
+            </div>
+            <!-- 右侧：优化管理员信息和退出按钮样式 -->
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center gap-2 text-white">
+                    <i class="fa fa-user-circle text-[#F8E9D8] text-xl"></i>
+                    <span class="cute-font">管理员 ID: 1001</span>
+                    <span class="text-[#F8E9D8] text-sm">🐶</span>
+                </div>
+                <button id="admin-logout" 
+                        class="py-2 px-5 rounded-full bg-white text-[#9A482A] font-medium cute-font hover:bg-[#F8E9D8] hover:shadow-lg transition-all duration-300 flex items-center gap-2">
+                    <i class="fa fa-sign-out"></i>
+                    退出
+                    <span class="text-xs">🐾</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 仪表盘 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+           <!-- 宠物信息总数 - 暖橙棕 -->
+<a href="pet-total.html"
+    class="card p-9 relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 block bg-white shadow-sm border border-[#E68A48]/20">
+    <div class="absolute inset-0 bg-cover bg-center opacity-50"
+        style="background-image: url('图片/2.jpg');"></div>
+    <div class="absolute inset-0 bg-white/40"></div>
+    <div class="flex flex-col items-center justify-center relative z-10 h-full text-center px-2">
+        <p class="text-[#E68A48] text-base font-medium cute-font mb-3 tracking-wider">宠物信息总数</p>
+        <h3 class="text-5xl font-bold text-[#E68A48] cute-font tracking-wide" id="pet-count">-</h3>
+    </div>
+    <div class="absolute bottom-5 right-5 w-12 h-12 rounded-full bg-[#E68A48]/10 flex items-center justify-center">
+        <i class="fa fa-paw text-[#E68A48] text-xl"></i>
+    </div>
+</a>
+
+<!-- 违规行为总数 - 焦糖红棕 -->
+<a href="violation-total.html"
+    class="card p-9 relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 block bg-white shadow-sm border border-[#A65233]/20">
+    <div class="absolute inset-0 bg-cover bg-center opacity-50"
+        style="background-image: url('图片/2.png');"></div>
+    <div class="absolute inset-0 bg-white/40"></div>
+    <div class="flex flex-col items-center justify-center relative z-10 h-full text-center px-2">
+        <p class="text-[#A65233] text-base font-medium cute-font mb-3 tracking-wider">违规行为总数</p>
+        <h3 class="text-5xl font-bold text-[#A65233] cute-font tracking-wide" id="violation-count">-</h3>
+    </div>
+    <div class="absolute bottom-5 right-5 w-12 h-12 rounded-full bg-[#A65233]/10 flex items-center justify-center">
+        <i class="fa fa-exclamation-triangle text-[#A65233] text-xl"></i>
+    </div>
+</a>
+
+
+<!-- 社区文明系数 - 奶茶棕 -->
+<a href="civilization-index.html"
+    class="card p-9 relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 block bg-white shadow-sm border border-[#9F7B58]/20">
+    <div class="absolute inset-0 bg-cover bg-center opacity-50"
+        style="background-image: url('图片/3.png');"></div>
+    <div class="absolute inset-0 bg-white/40"></div>
+    <div class="flex flex-col items-center justify-center relative z-10 h-full text-center px-2">
+        <p class="text-[#9F7B58] text-base font-medium cute-font mb-3 tracking-wider">社区文明系数</p>
+        <h3 class="text-5xl font-bold text-[#9F7B58] cute-font tracking-wide"><span id="civilScore">-</span><span class="text-2xl font-normal ml-2">分</span></h3>
+    </div>
+    <div class="absolute bottom-5 right-5 w-12 h-12 rounded-full bg-[#9F7B58]/10 flex items-center justify-center">
+        <i class="fa fa-star text-[#9F7B58] text-xl"></i>
+    </div>
+</a>
+</div>
+
+     <!-- 图表区 -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+    <!-- 社区养宠热力图卡片 -->
+    <div class="card p-6 relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden"
+        style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+        <!-- 背景大狗爪装饰 -->
+        <div class="absolute bottom-0 right-0 text-[#D4B190]/20 z-0">
+            <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+            <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4 absolute top-0 left-0 text-[#D4B190]/30"></i>
+        </div>
+        
+        <h3 class="text-lg font-bold text-[#A65233] mb-6 flex items-center justify-start gap-2 cute-font relative z-10">
+            <i class="fa fa-map-marker text-[#E68A48]"></i>
+            社区养宠热力图
+        </h3>
+        <div id="pet-heatmap" class="min-h-[400px] max-h-[500px] bg-white/80 rounded-sm overflow-hidden relative z-10">
+            <div id="heatmap-container" class="w-full h-full" style="height: 400px;"></div>
+            <div id="heatmap-loading" class="absolute inset-0 flex items-center justify-center bg-white/80">
+                <div class="spinner"></div>
+            </div>
+            <!-- 热力图标注提示 -->
+            <div class="absolute top-4 left-4 bg-white/90 rounded-lg p-3 shadow-md border border-[#A65233]/20 z-20">
+                <div class="text-xs font-medium text-[#A65233] mb-2 cute-font">宠物密度图例</div>
+                <div class="flex items-center space-x-2 mb-1">
+                    <div class="w-4 h-4 bg-[#32CD32] rounded-sm"></div>
+                    <span class="text-xs text-gray-600">低</span>
+                </div>
+                <div class="flex items-center space-x-2 mb-1">
+                    <div class="w-4 h-4 bg-[#FFD700] rounded-sm"></div>
+                    <span class="text-xs text-gray-600">中</span>
+                </div>
+                <div class="flex items-center space-x-2 mb-1">
+                    <div class="w-4 h-4 bg-[#FF8C00] rounded-sm"></div>
+                    <span class="text-xs text-gray-600">较高</span>
+                </div>
+                <div class="flex items-center space-x-2 mb-1">
+                    <div class="w-4 h-4 bg-[#FF4500] rounded-sm"></div>
+                    <span class="text-xs text-gray-600">高</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 bg-[#8B0000] rounded-sm"></div>
+                    <span class="text-xs text-gray-600">极高</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全区文明系数趋势卡片 -->
+    <div onclick="window.location.href='civilization-trend.html'" 
+        class="card p-6 relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden cursor-pointer"
+        style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+        <!-- 背景大狗爪装饰 -->
+        <div class="absolute bottom-0 right-0 text-[#D4B190]/20 z-0">
+            <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+            <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4 absolute top-0 left-0 text-[#D4B190]/30"></i>
+        </div>
+        
+        <div class="absolute inset-0 bg-gradient-to-br from-[#A65233]/5 to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
+        
+        <div class="flex justify-between items-center mb-6 relative z-10">
+            <h3 class="text-lg font-bold text-[#A65233] flex items-center justify-start gap-2 cute-font">
+                <i class="fa fa-line-chart text-[#E68A48]"></i>
+                全区文明系数趋势
+            </h3>
+            <span class="text-sm text-[#A65233] bg-[#A65233]/10 px-3 py-1 rounded-full cute-font flex items-center gap-1">
+                点击查看各社区详情 <i class="fa fa-arrow-right"></i>
+            </span>
+        </div>
+        <div class="rounded-sm bg-white/80 relative z-10">
+            <canvas id="civilization-chart" class="civilization-chart-canvas" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+    <!-- 公告管理 -->
+<div class="card p-6 relative mb-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+     style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+    <div class="flex justify-between items-center mb-4 relative z-10">
+        <h3 class="text-lg font-bold text-[#A65233] flex items-center justify-start gap-2 cute-font">
+            <i class="fa fa-paw text-[#E68A48]"></i>
+            社区公告管理
+            <i class="fa fa-paw text-[#E68A48]"></i>
+        </h3>
+        <button onclick="document.getElementById('modal-overlay').style.display = 'flex'; document.getElementById('ann-modal').classList.remove('hidden');"
+                class="px-4 py-2 bg-[#A65233] text-white rounded-md hover:bg-[#914128] transition-colors hover:scale-105 flex items-center gap-2 cute-font">
+            <i class="fa fa-plus mr-1"></i> 发布新公告
+        </button>
+    </div>
+    
+    <div class="overflow-x-auto bg-white/80 rounded-sm p-1 relative z-10">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">标题</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">发布时间</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">状态</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">操作</th>
+                </tr>
+            </thead>
+            <tbody id="announcement-body" class="bg-white divide-y divide-gray-200"></tbody>
+        </table>
+    </div>
+</div>
+
+      <!-- 违规管理 -->
+<div class="card p-6 relative mb-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+     style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
+        <h3 class="text-lg font-bold text-[#A65233] flex items-center justify-start gap-2 cute-font">
+            <i class="fa fa-paw text-[#E68A48]"></i>
+            违规记录管理
+            <i class="fa fa-paw text-[#E68A48]"></i>
+        </h3>
+        <div class="flex gap-4">
+            <div class="relative">
+                <select id="violation-filter" onchange="loadViolations(this.value)" 
+                        class="px-4 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A65233]/50 focus:border-[#A65233] transition-all shadow-sm bg-white/90 appearance-none cute-font text-sm">
+                </select>
+                <span class="absolute right-4 top-3 pointer-events-none text-[#E68A48]">
+                    <i class="fa fa-chevron-down"></i>
+                </span>
+            </div>
+            <button onclick="document.getElementById('modal-overlay').style.display = 'flex'; document.getElementById('vio-modal').classList.remove('hidden');"
+                    class="px-4 py-2.5 bg-[#A65233] text-white rounded-md hover:bg-[#914128] transition-colors hover:scale-105 flex items-center gap-2 cute-font">
+                <i class="fa fa-plus mr-1"></i> 新增违规
+            </button>
+        </div>
+    </div>
+    
+    <div class="overflow-x-auto bg-white/80 rounded-sm p-1">
+        <table class="min-w-full divide-y divide-gray-200" id="violation-table">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">宠物/主人</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">联系方式</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">违规类型</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">扣分</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">详情</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">时间</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">状态</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#A65233] uppercase tracking-wider">操作</th>
+                </tr>
+            </thead>
+            <tbody id="violation-body" class="bg-white divide-y divide-gray-200">
+                <!-- 违规数据将通过JS动态填充 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+</main>
+
+    <!-- 模态框 -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[999] backdrop-blur-sm" style="display: none;">
+        <!-- 公告模态框 -->
+        <div id="ann-modal" class="modal-content p-8 w-[420px] hidden relative mx-auto shadow-2xl animate-fade-in-up">
+            <h3 class="text-2xl font-bold mb-6 text-[#A65233] cute-font">发布/编辑公告</h3>
+            <input type="hidden" id="ann-id">
+            <input id="ann-title" type="text" placeholder="公告标题" class="w-full border rounded-2xl px-5 py-3 mb-4 cute-font focus:ring-[#A65233] focus:border-[#A65233]">
+            <textarea id="ann-content" rows="5" placeholder="公告内容" class="w-full border rounded-2xl px-5 py-3 mb-4 cute-font focus:ring-[#A65233] focus:border-[#A65233]"></textarea>
+            <select id="ann-top" class="w-full border rounded-2xl px-5 py-3 mb-6 cute-font">
+                <option value="0">普通公告</option>
+                <option value="1">置顶公告</option>
+            </select>
+            <div class="flex justify-end gap-4">
+                <button class="close-modal px-6 py-2 border rounded-xl hover:bg-gray-50 cute-font">取消</button>
+                <button id="save-ann" class="px-6 py-2 bg-[#A65233] text-white rounded-xl hover:bg-[#914128] cute-font">保存公告</button>
+            </div>
+        </div>
+
+        <!-- 违规模态框 -->
+        <div id="vio-modal" class="modal-content p-8 w-[600px] hidden max-h-[90vh] overflow-auto relative mx-auto shadow-2xl animate-fade-in-up">
+            <h3 class="text-2xl font-bold mb-6 text-[#A65233] cute-font">新增/编辑违规记录</h3>
+            <input type="hidden" id="vio-id">
+            <div class="grid grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-2 cute-font">宠物名称（可选）</label>
+                    <input id="vio-pet-name" type="text" class="w-full border rounded-xl px-4 py-3 cute-font">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-2 cute-font">主人电话（可选）</label>
+                    <input id="vio-owner-tel" type="text" class="w-full border rounded-xl px-4 py-3 cute-font">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-2 cute-font">违规类型</label>
+                    <select id="vio-type" class="w-full border rounded-xl px-4 py-3 cute-font"></select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-2 cute-font">违规时间</label>
+                    <input id="vio-time" type="datetime-local" class="w-full border rounded-xl px-4 py-3 cute-font">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-600 mb-2 cute-font">违规描述</label>
+                <textarea id="vio-desc" rows="3" class="w-full border rounded-xl px-4 py-3 cute-font"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block text-sm text-gray-600 mb-2 cute-font">处理人</label>
+                    <input id="vio-handler" type="text" class="w-full border rounded-xl px-4 py-3 cute-font" value="管理员">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-600 mb-2 cute-font">处理状态</label>
+                    <select id="vio-status" class="w-full border rounded-xl px-4 py-3 cute-font">
+                        <option value="pending">待处理</option>
+                        <option value="processing">处理中</option>
+                        <option value="completed">已完成</option>
+                        <option value="rejected">已驳回</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm text-gray-600 mb-2 cute-font">处理结果</label>
+                <textarea id="vio-result" rows="2" class="w-full border rounded-xl px-4 py-3 cute-font"></textarea>
+            </div>
+            <div class="flex justify-end gap-4">
+                <button class="close-modal px-6 py-2 border rounded-xl hover:bg-gray-50 cute-font">取消</button>
+                <button id="save-vio" class="px-6 py-2 bg-[#A65233] text-white rounded-xl hover:bg-[#914128] cute-font">保存记录</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:3000/api';
+        let chartInstance = null;
+        let allAnnouncements = [];
+        let allViolations = [];
+
+        // Toast
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('msg-toast');
+            t.textContent = msg;
+            t.className = `msg-toast ${type === 'error' ? 'bg-[#EF4444]' : 'bg-[#10B981]'}`;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2800);
+        }
+
+        // 通用加载数据
+        async function fetchData(url) {
+            const token = localStorage.getItem('petx_token') || '';
+            const res = await fetch(url, { 
+                headers: { 'x-auth-token': token },
+                credentials: 'include' 
+            });
+            return await res.json();
+        }
+
+        // POST请求封装
+        async function postData(url, data) {
+            const token = localStorage.getItem('petx_token') || '';
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token
+                },
+                body: JSON.stringify(data),
+                credentials: 'include'
+            });
+            return await res.json();
+        }
+
+        // 仪表盘
+        async function loadDashboard() {
+            const data = await fetchData(`${API_BASE}/admin/dashboard`);
+            if (data.code === 200) {
+                document.getElementById('pet-count').textContent = data.data.petCount;
+                document.getElementById('violation-count').textContent = data.data.violationCount;
+                document.getElementById('civilScore').textContent = data.data.civilScore;
+            }
+        }
+
+        // 热力图
+        let map = null;
+        let heatmap = null;
+        
+        async function loadHeatmap() {
+            const loading = document.getElementById('heatmap-loading');
+            loading.style.display = 'flex';
+            
+            try {
+                // 武汉理工大学南湖校区精确坐标（通过高德地图查询的精确位置）
+                // 注：此坐标为武汉理工大学南湖校区正门的精确位置，向上移动了2公里
+                const wutSouthLakeCampus = [114.388, 30.505];
+                
+                // 初始化地图
+                if (!map) {
+                    map = new AMap.Map('heatmap-container', {
+                        center: wutSouthLakeCampus, // 武汉理工大学南湖校区坐标
+                        zoom: 17, // 进一步增加缩放级别，更精确显示校园
+                        zooms: [10, 18],
+                        mapStyle: 'amap://styles/light'
+                    });
+                }
+                
+                // 确保地图中心始终对齐武汉理工大学南湖校区
+                map.setCenter(wutSouthLakeCampus);
+                map.setZoom(17);
+                
+                // 生成热力图数据
+                const heatmapData = generateHeatmapData();
+                
+                // 初始化热力图
+                if (!heatmap) {
+                    // 确保HeatMap插件加载
+                    if (typeof AMap.HeatMap === 'undefined') {
+                        AMap.plugin(['AMap.HeatMap'], function() {
+                            initHeatmap(heatmapData, loading, wutSouthLakeCampus);
+                        });
+                    } else {
+                        initHeatmap(heatmapData, loading, wutSouthLakeCampus);
+                    }
+                } else {
+                    // 更新热力图数据
+                    heatmap.setDataSet({
+                        data: heatmapData,
+                        max: 50
+                    });
+                    
+                    // 添加校园标记，确保用户能看到校园位置
+                    addCampusMarker(wutSouthLakeCampus);
+                    
+                    loading.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('加载热力图失败:', error);
+                loading.style.display = 'none';
+                const container = document.getElementById('heatmap-container');
+                container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500">热力图加载失败，请刷新页面重试</div>';
+            }
+        }
+        
+        function initHeatmap(data, loading, wutSouthLakeCampus) {
+            heatmap = new AMap.HeatMap(map, {
+                radius: 25,
+                opacity: [0, 0.8],
+                gradient: {
+                    0.3: '#32CD32',
+                    0.5: '#FFD700',
+                    0.7: '#FF8C00',
+                    0.9: '#FF4500',
+                    1.0: '#8B0000'
+                }
+            });
+            
+            // 设置热力图数据
+            heatmap.setDataSet({
+                data: data,
+                max: 50
+            });
+            
+            // 添加校园标记，确保用户能看到校园位置
+            addCampusMarker(wutSouthLakeCampus);
+            
+            // 添加社区标记
+            addCommunityMarkers();
+            
+            loading.style.display = 'none';
+        }
+        
+        function addCampusMarker(campusCenter) {
+            // 添加校园标记，确保用户能看到校园位置
+            const campusMarker = new AMap.Marker({
+                position: campusCenter,
+                title: "武汉理工大学南湖校区",
+                content: `
+                    <div style="background-color: white; border-radius: 50%; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0,0,0,0.25); border: 4px solid #9A482A; z-index: 1000;">
+                        <span style="font-size: 28px;">🏫</span>
+                    </div>
+                `,
+                offset: new AMap.Pixel(-28, -28),
+                zIndex: 1000 // 确保标记在热力图之上
+            });
+            campusMarker.setMap(map);
+            
+            // 添加校园信息窗口
+            const campusInfoWindow = new AMap.InfoWindow({
+                content: `
+                    <div style="padding: 15px; min-width: 220px; font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif;">
+                        <h3 style="color: #9A482A; margin: 0 0 10px 0; font-size: 16px;">武汉理工大学南湖校区</h3>
+                        <p style="margin: 0; color: #666; font-size: 14px;">热力图中心</p>
+                        <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">坐标: ${campusCenter[0]}, ${campusCenter[1]}</p>
+                        <p style="margin: 5px 0 0 0; color: #999; font-size: 12px;">缩放级别: 17</p>
+                    </div>
+                `,
+                offset: new AMap.Pixel(0, -30)
+            });
+            
+            campusMarker.on('click', function() {
+                campusInfoWindow.open(map, campusCenter);
+            });
+        }
+        
+        function toggleCommunityDetails(communityId) {
+            const detailsDiv = document.getElementById('community-details-' + communityId);
+            const toggleText = document.getElementById('toggle-text-' + communityId);
+            
+            if (detailsDiv.style.display === 'none') {
+                detailsDiv.style.display = 'block';
+                toggleText.textContent = '收起详情';
+            } else {
+                detailsDiv.style.display = 'none';
+                toggleText.textContent = '查看详情';
+            }
+        }
+        
+        function addCommunityMarkers() {
+            // 武汉理工大学南湖校区周边的真实社区位置，所有社区都向上移动了2公里
+            const communities = [
+                { name: "武汉理工大学南湖校区", center: [114.387, 30.508], density: 80, icon: "🏫" },
+                { name: "南湖名都A区", center: [114.392, 30.503], density: 60, icon: "🏠" },
+                { name: "南湖名都B区", center: [114.395, 30.500], density: 55, icon: "🏠" },
+                { name: "南国南湖郡", center: [114.380, 30.506], density: 70, icon: "🏠" },
+                { name: "保利中央公馆", center: [114.375, 30.513], density: 75, icon: "🏠" },
+                { name: "金地格林小城", center: [114.370, 30.508], density: 65, icon: "🏠" },
+                { name: "万科金色城市", center: [114.395, 30.513], density: 50, icon: "🏠" },
+                { name: "丽岛2046", center: [114.385, 30.498], density: 45, icon: "🏠" }
+            ];
+            
+            // 为每个社区添加标记
+            communities.forEach(community => {
+                // 创建自定义图标
+                const marker = new AMap.Marker({
+                    position: community.center,
+                    title: community.name,
+                    content: `
+                        <div style="background-color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border: 2px solid #9A482A;">
+                            <span style="font-size: 20px;">${community.icon}</span>
+                        </div>
+                    `,
+                    offset: new AMap.Pixel(-20, -20)
+                });
+                
+                marker.setMap(map);
+                
+                // 添加信息窗口
+                const infoWindow = new AMap.InfoWindow({
+                    content: `
+                        <div style="padding: 15px; min-width: 240px; font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif;">
+                            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                                <span style="font-size: 24px; margin-right: 10px;">${community.icon}</span>
+                                <h3 style="color: #9A482A; margin: 0; font-size: 18px; font-weight: bold;">${community.name}</h3>
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="color: #666; font-size: 14px;">宠物密度:</span>
+                                    <span style="font-weight: bold; color: #E68A48;">${community.density}%</span>
+                                </div>
+                                <div style="width: 100%; height: 6px; background-color: #f3f4f6; border-radius: 3px; overflow: hidden; margin-top: 4px;">
+                                    <div style="width: ${community.density}%; height: 100%; background: linear-gradient(to right, #32CD32, #FFD700, #FF8C00, #FF4500); border-radius: 3px;"></div>
+                                </div>
+                            </div>
+                            <div id="community-details-${community.name.replace(/\s+/g, '-')}" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                                <div style="margin-bottom: 8px;">
+                                    <span style="color: #666; font-size: 14px; display: block; margin-bottom: 4px;">社区概况</span>
+                                    <p style="margin: 0; color: #888; font-size: 13px; line-height: 1.4;">该社区共有约${Math.floor(community.density * 10)}户居民，其中约${Math.floor(community.density * 5)}户养有宠物，宠物种类以猫、狗为主。</p>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <span style="color: #666; font-size: 14px; display: block; margin-bottom: 4px;">文明养宠指数</span>
+                                    <span style="font-weight: bold; color: ${community.density > 70 ? '#10B981' : community.density > 50 ? '#F59E0B' : '#EF4444'};">${Math.floor(community.density * 0.8 + 20)}分</span>
+                                </div>
+                                <div>
+                                    <span style="color: #666; font-size: 14px; display: block; margin-bottom: 4px;">最近活动</span>
+                                    <p style="margin: 0; color: #888; font-size: 13px; line-height: 1.4;">${community.name}于${new Date().toLocaleDateString()}组织了宠物疫苗接种活动，共有${Math.floor(community.density * 3)}只宠物参与。</p>
+                                </div>
+                            </div>
+                            <button onclick="toggleCommunityDetails('${community.name.replace(/\s+/g, '-')}')" 
+                                    style="width: 100%; padding: 8px; background-color: #F8E9D8; color: #9A482A; border: 1px solid #E68A48; border-radius: 6px; font-size: 14px; font-family: 'ZCOOL KuaiLe', sans-serif; cursor: pointer; transition: all 0.3s ease;">
+                                <span id="toggle-text-${community.name.replace(/\s+/g, '-')}">查看详情</span>
+                            </button>
+                        </div>
+                    `,
+                    offset: new AMap.Pixel(0, -30)
+                });
+                
+                // 点击标记显示信息窗口
+                marker.on('click', function() {
+                    infoWindow.open(map, community.center);
+                });
+            });
+            
+            // 添加地图控件
+            AMap.plugin(['AMap.ToolBar', 'AMap.Scale'], function() {
+                map.addControl(new AMap.ToolBar({
+                    position: 'RB'
+                }));
+                map.addControl(new AMap.Scale({
+                    position: 'RB'
+                }));
+            });
+        }
+        
+        function generateHeatmapData() {
+            // 武汉理工大学南湖校区周边的真实社区位置，所有社区都向上移动了2公里
+            const communities = [
+                { name: "武汉理工大学南湖校区", center: [114.387, 30.508], density: 80 },
+                { name: "南湖名都A区", center: [114.392, 30.503], density: 60 },
+                { name: "南湖名都B区", center: [114.395, 30.500], density: 55 },
+                { name: "南国南湖郡", center: [114.380, 30.506], density: 70 },
+                { name: "保利中央公馆", center: [114.375, 30.513], density: 75 },
+                { name: "金地格林小城", center: [114.370, 30.508], density: 65 },
+                { name: "万科金色城市", center: [114.395, 30.513], density: 50 },
+                { name: "丽岛2046", center: [114.385, 30.498], density: 45 }
+            ];
+            
+            const heatData = [];
+            
+            // 为每个社区生成热力点
+            communities.forEach(community => {
+                const pointCount = Math.floor(community.density / 10);
+                
+                // 生成社区中心的高密度热力点
+                for (let i = 0; i < pointCount; i++) {
+                    const offsetLng = (Math.random() - 0.5) * 0.005;
+                    const offsetLat = (Math.random() - 0.5) * 0.005;
+                    
+                    heatData.push({
+                        lng: community.center[0] + offsetLng,
+                        lat: community.center[1] + offsetLat,
+                        count: Math.floor((community.density / 100) * 40) + 10
+                    });
+                }
+                
+                // 生成社区周边的低密度热力点
+                for (let i = 0; i < Math.floor(pointCount / 2); i++) {
+                    const offsetLng = (Math.random() - 0.5) * 0.01;
+                    const offsetLat = (Math.random() - 0.5) * 0.01;
+                    
+                    heatData.push({
+                        lng: community.center[0] + offsetLng,
+                        lat: community.center[1] + offsetLat,
+                        count: Math.floor((community.density / 100) * 20) + 5
+                    });
+                }
+            });
+            
+            return heatData;
+        }
+
+        // 趋势图
+        async function loadTrendChart() {
+            const res = await fetchData(`${API_BASE}/admin/civilizationTrend`);
+            if (res.code !== 200) return;
+            const ctx = document.getElementById('civilization-chart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: res.data.map(item => item.month),
+                    datasets: [{
+                        label: '文明系数',
+                        data: res.data.map(item => item.score),
+                        borderColor: '#A65233',
+                        backgroundColor: 'rgba(166, 82, 51, 0.1)',
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#A65233',
+                        pointBorderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        y: { min: 70, max: 100, grid: { color: '#f3f4f6' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // 查看违规图片
+        function viewViolationImage(imgPath) {
+            // 创建图片查看模态框
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-[9999]';
+            modal.innerHTML = `
+                <div class="bg-white p-4 rounded-lg max-w-2xl max-h-[90vh]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-[#A65233] cute-font">违规监控照片</h3>
+                        <button class="text-gray-500 hover:text-gray-700 close-modal-btn">
+                            <i class="fa fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="flex justify-center items-center">
+                        <img src="${imgPath}" alt="违规监控照片" class="max-w-full max-h-[70vh] object-contain rounded">
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // 添加关闭事件
+            modal.querySelector('.close-modal-btn').addEventListener('click', function() {
+                modal.remove();
+            });
+            
+            // 点击模态框背景关闭
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // 公告
+        async function loadAnnouncements() {
+            const tbody = document.getElementById('announcement-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8"><div class="spinner mx-auto"></div></td></tr>';
+            const res = await fetchData(`${API_BASE}/announcements`);
+            tbody.innerHTML = '';
+            if (res.code === 200 && res.data.length) {
+                allAnnouncements = res.data;
+                res.data.forEach(ann => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 text-gray-800 font-medium cute-font">${ann.title}</td>
+                        <td class="px-6 py-4 text-gray-600 text-sm cute-font">${new Date(ann.publish_time).toLocaleString()}</td>
+                        <td class="px-6 py-4">${ann.is_top == 1 ? '<span class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs cute-font">置顶</span>' : '<span class="text-gray-400 text-sm cute-font">普通</span>'}</td>
+                        <td class="px-6 py-4">
+                            <button onclick="editAnnouncement(${ann.id})" class="text-[#E68A48] hover:text-[#d97706] mr-4 font-medium">编辑</button>
+                            <button onclick="deleteAnnouncement(${ann.id})" class="text-gray-400 hover:text-red-500 font-medium">删除</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-400 cute-font">暂无公告 ~</td></tr>';
+            }
+        }
+
+        function editAnnouncement(id) {
+            const ann = allAnnouncements.find(a => a.id === id);
+            if (!ann) return;
+            document.getElementById('ann-id').value = ann.id;
+            document.getElementById('ann-title').value = ann.title;
+            document.getElementById('ann-content').value = ann.content;
+            document.getElementById('ann-top').value = ann.is_top;
+            document.getElementById('modal-overlay').style.display = 'flex';
+            document.getElementById('ann-modal').classList.remove('hidden');
+        }
+
+        // 违规类型加载
+        async function loadViolationTypes() {
+            const res = await fetchData(`${API_BASE}/admin/violationTypes`);
+            const filter = document.getElementById('violation-filter');
+            const select = document.getElementById('vio-type');
+            filter.innerHTML = '<option value="all">全部类型</option>';
+            select.innerHTML = '';
+            if (res.code === 200) {
+                res.data.forEach(t => {
+                    filter.innerHTML += `<option value="${t.id}">${t.type_name}</option>`;
+                    select.innerHTML += `<option value="${t.id}">${t.type_name}（扣${t.deduction_score}分）</option>`;
+                });
+            }
+        }
+
+        // 违规列表
+        async function loadViolations(filter = 'all') {
+            const tbody = document.getElementById('violation-body');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12"><div class="spinner mx-auto"></div></td></tr>';
+            const res = await fetchData(`${API_BASE}/admin/violations?filter=${filter}`);
+            tbody.innerHTML = '';
+            if (res.code === 200 && res.data.length) {
+                allViolations = res.data;
+                res.data.forEach(v => {
+                    const statusClass = {
+                        pending: 'status-pending',
+                        processing: 'status-processing',
+                        completed: 'status-completed',
+                        rejected: 'status-rejected'
+                    }[v.handle_status] || '';
+                    const statusText = {
+                        pending: '待处理',
+                        processing: '处理中',
+                        completed: '已完成',
+                        rejected: '已驳回'
+                    }[v.handle_status] || v.handle_status;
+                    
+                    // 根据违规类型设置不同的监控照片
+                    let imgPath;
+                    if (v.type_name.includes('未牵绳遛狗')) {
+                        // 使用专门的遛狗未牵绳照片
+                        imgPath = `图片/遛狗未牵绳.jpg`;
+                    } else {
+                        // 其他违规类型使用随机照片
+                        const imgIndex = (v.id % 4) + 1;
+                        imgPath = `图片/违规${imgIndex}.jpg`;
+                    }
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="px-4 py-3 font-medium text-gray-800 cute-font">${v.pet_name || '-'}</td>
+                        <td class="px-4 py-3 text-gray-600 cute-font">${v.owner_tel || '-'}</td>
+                        <td class="px-4 py-3 text-gray-600 cute-font">${v.type_name}</td>
+                        <td class="px-4 py-3 font-bold text-red-500 cute-font">-${v.deduction_score}</td>
+                        <td class="px-4 py-3 max-w-xs truncate text-gray-500 text-sm cute-font" title="${v.violation_desc}">${v.violation_desc || '-'}</td>
+                        <td class="px-4 py-3 text-gray-500 text-sm cute-font">${new Date(v.violation_time).toLocaleString()}</td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass} cute-font">${statusText}</span></td>
+                        <td class="px-4 py-3 flex items-center space-x-3">
+                            <button onclick="viewViolationImage('${imgPath}')" class="text-[#E68A48] hover:text-[#d97706]" title="查看违规监控照片">
+                                <i class="fa fa-camera text-lg"></i>
+                            </button>
+                            <button onclick="editViolation(${v.id})" class="text-[#E68A48] hover:text-[#d97706]" title="编辑">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                            <button onclick="deleteViolation(${v.id})" class="text-gray-400 hover:text-red-500" title="删除">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-gray-400 cute-font">暂无违规记录 ~</td></tr>';
+            }
+        }
+
+        function editViolation(id) {
+            const v = allViolations.find(i => i.id === id);
+            if (!v) return;
+            document.getElementById('vio-id').value = v.id;
+            document.getElementById('vio-pet-name').value = v.pet_name || '';
+            document.getElementById('vio-owner-tel').value = v.owner_tel || '';
+            document.getElementById('vio-type').value = v.violation_type_id;
+            
+            const d = new Date(v.violation_time);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            document.getElementById('vio-time').value = d.toISOString().slice(0, 16);
+            
+            document.getElementById('vio-desc').value = v.violation_desc || '';
+            document.getElementById('vio-handler').value = v.handler || '管理员';
+            document.getElementById('vio-status').value = v.handle_status;
+            document.getElementById('vio-result').value = v.handle_result || '';
+            
+            document.getElementById('modal-overlay').style.display = 'flex';
+            document.getElementById('vio-modal').classList.remove('hidden');
+        }
+
+        // 保存公告
+        document.getElementById('save-ann').onclick = async () => {
+            const payload = {
+                id: document.getElementById('ann-id').value || null,
+                title: document.getElementById('ann-title').value,
+                content: document.getElementById('ann-content').value,
+                isTop: document.getElementById('ann-top').value,
+                time: new Date().toISOString().slice(0, 19).replace('T', ' ')
+            };
+            if(!payload.title) return showToast('标题不能为空', 'error');
+            
+            const res = await postData(`${API_BASE}/admin/saveAnnouncement`, payload);
+            if(res.code === 200) {
+                showToast('保存成功');
+                document.getElementById('modal-overlay').classList.add('hidden');
+                document.getElementById('ann-modal').classList.add('hidden');
+                loadAnnouncements();
+            } else {
+                showToast('保存失败', 'error');
+            }
+        };
+
+        // 保存违规
+        document.getElementById('save-vio').onclick = async () => {
+            const payload = {
+                id: document.getElementById('vio-id').value || null,
+                petName: document.getElementById('vio-pet-name').value.trim(),
+                ownerTel: document.getElementById('vio-owner-tel').value.trim(),
+                violation_type_id: document.getElementById('vio-type').value,
+                violationTime: document.getElementById('vio-time').value,
+                handleNote: document.getElementById('vio-desc').value,
+                handleStatus: document.getElementById('vio-status').value,
+                handleResult: document.getElementById('vio-result').value
+            };
+
+            if (!payload.violation_type_id || !payload.violationTime) {
+                showToast('请填写完整信息', 'error');
+                return;
+            }
+
+            const res = await postData(`${API_BASE}/admin/saveViolation`, payload);
+            if (res.code === 200) {
+                showToast('保存成功！');
+                document.getElementById('modal-overlay').classList.add('hidden');
+                document.getElementById('vio-modal').classList.add('hidden');
+                // 清空表单
+                document.getElementById('vio-id').value = '';
+                document.getElementById('vio-pet-name').value = '';
+                document.getElementById('vio-owner-tel').value = '';
+                document.getElementById('vio-desc').value = '';
+                document.getElementById('vio-result').value = '';
+                
+                loadViolations();
+                loadDashboard();
+            } else {
+                showToast(res.msg || '保存失败', 'error');
+            }
+        };
+
+        async function deleteAnnouncement(id) { if(confirm('确定删除？')) { await postData(`${API_BASE}/admin/deleteAnnouncement`, {id}); loadAnnouncements(); } }
+        async function deleteViolation(id) { if(confirm('确定删除？')) { await postData(`${API_BASE}/admin/deleteViolation`, {id}); loadViolations(); loadDashboard(); } }
+
+        // 关闭模态
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('modal-overlay').style.display = 'none';
+                document.getElementById('ann-modal').classList.add('hidden');
+                document.getElementById('vio-modal').classList.add('hidden');
+            });
+        });
+
+        // 初始化
+        window.onload = async () => {
+            await loadViolationTypes();
+            await loadDashboard();
+            await loadHeatmap();
+            await loadTrendChart();
+            await loadAnnouncements();
+            await loadViolations();
+
+            document.getElementById('admin-logout').onclick = async () => {
+                if(confirm('确认退出？')) {
+                    localStorage.removeItem('petx_token');
+                    window.location.href = 'login.html';
+                }
+            };
+        };
+    </script>
+    <script src="agent-widget.js"></script>
+    <script src="page-transition.js"></script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=949906fe9f2f9cec005d6fec68435bdd&plugin=AMap.HeatMap"></script>
+</body>
+</html>
