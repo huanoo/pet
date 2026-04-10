@@ -199,7 +199,7 @@
         async function checkLogin() {
             try {
                 const token = localStorage.getItem('petx_token') || '';
-                const res = await fetch('http://localhost:3000/api/checkLogin', { 
+                const res = await fetch('https://pet-production-28ba.up.railway.app/api/checkLogin', { 
                     headers: { 'x-auth-token': token },
                     credentials: 'include' 
                 });
@@ -217,7 +217,7 @@
         async function loadData() {
             try {
                 const token = localStorage.getItem('petx_token') || '';
-                const res = await fetch('http://localhost:3000/api/admin/violationStats', {
+                const res = await fetch('https://pet-production-28ba.up.railway.app/api/admin/violationStats', {
                     headers: { 
                         'Content-Type': 'application/json',
                         'x-auth-token': token
