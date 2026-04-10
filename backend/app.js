@@ -2493,3 +2493,10 @@ const checkInterval = setInterval(() => {
     startServer();
   }
 }, 100);
+// 根路径重定向到登录页面
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
+
+// 启动服务器
+startServer();
