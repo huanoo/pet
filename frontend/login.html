@@ -389,10 +389,13 @@
         // 存储从数据库加载的社区数据
         let communityData = [];
 
+        // API 基础 URL
+        const apiBaseUrl = 'https://pet-production-28ba.up.railway.app';
+
         // 从数据库加载所有社区数据
         async function loadCommunities() {
             try {
-                const response = await fetch('http://127.0.0.1:3000/api/community/search', {
+                const response = await fetch(`${apiBaseUrl}/api/community/search`, {
                     method: 'GET',
                     credentials: 'include'
                 });
@@ -611,7 +614,7 @@
 
             try {
                 // 发送注册POST请求（适配后端接口参数）
-                const response = await fetch('http://127.0.0.1:3000/api/register', {
+                const response = await fetch(`${apiBaseUrl}/api/register`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -689,7 +692,7 @@
 
             try {
                 // 发送登录POST请求
-                const response = await fetch('http://127.0.0.1:3000/api/login', {
+                const response = await fetch(`${apiBaseUrl}/api/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -749,7 +752,7 @@
         // 6. 新增：检查登录态（适配后端/api/checkLogin接口）
         async function checkLoginState() {
             try {
-                const response = await fetch('http://127.0.0.1:3000/api/checkLogin', {
+                const response = await fetch(`${apiBaseUrl}/api/checkLogin`, {
                     method: 'GET',
                     credentials: 'include'
                 });
