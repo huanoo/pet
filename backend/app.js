@@ -534,7 +534,7 @@ app.post('/api/register', async (req, res) => {
 
     const enc = await encryptPwd(pwd);
     await pool.query(
-      'INSERT INTO users (tel, pwd, user_type, user_name, community_id) VALUES (?,?,?,?,?)',
+      'INSERT INTO users (tel, password, user_type, name, community_id) VALUES (?,?,?,?,?)',
       [tel, enc, userType, userName, communityId || null]
     );
     
