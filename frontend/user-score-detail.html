@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文明养宠系数详情 - PetX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 补充Font Awesome 6.x，匹配参考代码的图标版本 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#9A482A', 
+                        secondary: '#F8E9D8',
+                        accent: '#E68A48',
+                        success: '#10B981', 
+                        warning: '#F59E0B', 
+                        danger: '#EF4444',
+                        neutral: { 
+                            50: '#F9FAFB', 
+                            100: '#F3F4F6',
+                            200: '#E5E7EB', 
+                            300: '#D1D5DB'  // 补充参考代码的neutral色系
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 完全匹配参考代码的样式定义 */
+        body { font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; letter-spacing: 0.5px; background-color: #F9FAFB; }
+        .cute-font { font-family: "ZCOOL KuaiLe", "Microsoft YaHei", sans-serif !important; }
+        .score-card { background: white; border-radius: 24px; box-shadow: 0 10px 30px rgba(194, 65, 12, 0.1); border: 2px solid rgba(194, 65, 12, 0.1); }
+        .progress-bar-bg { background-color: #eee; border-radius: 10px; height: 12px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(154, 72, 42, 0.1); }
+    </style>
+</head>
+<body class="bg-neutral-50 min-h-screen">
+ <!-- 顶部导航（完全匹配参考代码样式 + 保留原有功能） -->
+<nav class="bg-[#9A482A] shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border-2 border-[#7c3c22]">
+                    <!-- 完全匹配参考代码的小狗图标 -->
+                    <i class="fa-solid fa-dog text-[#9A482A] text-2xl"></i>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- 完全匹配参考代码的文字组合 -->
+                    <span class="text-2xl font-bold text-white cute-font">PetX</span>
+                    <span class="text-white text-sm">🐾</span>
+                    <span class="text-xl font-medium text-[#F8E9D8] cute-font">管理后台</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-6">
+                <!-- 完全匹配参考代码的管理员信息区域 -->
+                <div class="flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-user-circle text-[#F8E9D8] text-xl"></i>
+                    <span class="cute-font">管理员</span>
+                </div>
+                <!-- 保留原有跳转功能（user.html），样式完全匹配参考代码 -->
+                <button onclick="window.location.href='user.html'" 
+                        class="py-2 px-5 rounded-full bg-white text-[#9A482A] font-medium cute-font hover:bg-[#F8E9D8] hover:shadow-lg transition-all duration-300 flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>返回首页</span>
+                    <span class="text-xs">🐾</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+    <main class="max-w-3xl mx-auto px-4 py-8">
+     <!-- 我的文明养宠指数（带两侧大尺寸装饰图片） -->
+<div class="flex items-center justify-center gap-4 mb-8">
+    <!-- 左侧装饰图片：更大尺寸 + 等高 + 无修饰 -->
+    <img src="图片/评分2.jpg" alt="宠物装饰图" class="h-full w-[180px] object-cover flex-shrink-0">
+    
+ <!-- 核心卡片：缩窄宽度 + 圆角 + 浮动效果 + 原有功能 + 加粗棕色边框（无顶角缝隙） -->
+<div class="card relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 w-[400px] mx-auto"
+     style="border: 4px solid #9A482A; border-radius: 1rem; box-sizing: border-box;">
+    <!-- 标题区块：调整圆角适配外层边框，消除缝隙 -->
+    <div class="bg-[#9A482A] py-4 px-6 text-center" style="border-radius: calc(1rem - 4px) calc(1rem - 4px) 0 0;">
+        <h3 class="text-lg font-bold text-white mb-0 flex items-center justify-center gap-2 cute-font">
+            <i class="fa fa-star text-white"></i>
+            我的文明养宠指数
+            <i class="fa fa-star text-white"></i>
+        </h3>
+    </div>
+    <!-- 内容区块：浅棕色背景 + 调整圆角适配外层边框 -->
+    <div class="p-8 text-center" style="background-color: #F5E9E0; border-radius: 0 0 calc(1rem - 4px) calc(1rem - 4px);">
+        <div class="text-6xl font-bold text-primary mb-4 cute-font" id="total-score">-</div>
+        <div class="inline-block px-4 py-1 rounded-full bg-green-100 text-green-700 text-sm font-bold cute-font" id="score-level">
+            评级加载中...
+        </div>
+        <p class="mt-6 text-[#9A482A]/80 text-sm max-w-lg mx-auto cute-font">
+            文明分由基础分、奖励分和违规扣分组成。保持良好的养宠习惯，您的分数将不断提升！
+        </p>
+    </div>
+</div>
+    
+    <!-- 右侧装饰图片：更大尺寸 + 等高 + 无修饰 -->
+    <img src="图片/评分1.jpg" alt="宠物装饰图" class="h-full w-[180px] object-cover flex-shrink-0">
+</div>
+
+<!-- 分数组成 -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- 分数构成卡片：统一风格 + 浅棕色背景 -->
+    <div class="card relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+         style="border: 4px solid #9A482A; border-radius: 1rem; box-sizing: border-box;">
+        <!-- 标题区块：调整圆角适配外层边框，消除缝隙 -->
+        <div class="bg-[#9A482A] py-4 px-6 text-center" style="border-radius: calc(1rem - 4px) calc(1rem - 4px) 0 0;">
+            <h3 class="text-lg font-bold text-white mb-0 flex items-center justify-center gap-2 cute-font">
+                <i class="fa fa-pie-chart text-white"></i>
+                分数构成
+                <i class="fa fa-pie-chart text-white"></i>
+            </h3>
+        </div>
+        <!-- 内容区块：浅棕色背景 + 适配圆角 -->
+        <div class="p-6" style="background-color: #F5E9E0; border-radius: 0 0 calc(1rem - 4px) calc(1rem - 4px);">
+            <canvas id="scoreChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- 扣分明细卡片：统一风格 + 浅棕色背景 -->
+    <div class="card relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+         style="border: 4px solid #9A482A; border-radius: 1rem; box-sizing: border-box;">
+        <!-- 标题区块：调整圆角适配外层边框，消除缝隙 -->
+        <div class="bg-[#9A482A] py-4 px-6 text-center" style="border-radius: calc(1rem - 4px) calc(1rem - 4px) 0 0;">
+            <h3 class="text-lg font-bold text-white mb-0 flex items-center justify-center gap-2 cute-font">
+                <i class="fa fa-list-ul text-white"></i>
+                扣分明细
+                <i class="fa fa-list-ul text-white"></i>
+            </h3>
+        </div>
+        <!-- 内容区块：浅棕色背景 + 适配圆角 -->
+        <div class="p-6" style="background-color: #F5E9E0; border-radius: 0 0 calc(1rem - 4px) calc(1rem - 4px);">
+            <div class="space-y-4" id="deduction-list">
+                <!-- 动态生成（保留原有功能） -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 可选：扣分明细列表项hover样式（适配浅棕色背景） -->
+<style>
+    #deduction-list > div, #deduction-list > li {
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease-in-out;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+    }
+    #deduction-list > div:hover, #deduction-list > li:hover {
+        transform: translateX(0.25rem);
+        background-color: rgba(166, 82, 51, 0.2); /* 适配浅棕色背景的hover效果，加深一点更明显 */
+        color: #7a381f;
+    }
+
+    /* 确保边框样式统一，无额外干扰 */
+    .card {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+</style>
+
+
+
+        <!-- 规则说明 -->
+<div class="card p-6 mb-6 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 rounded-2xl">
+    <!-- 背景层：统一风格 + 白色遮罩 -->
+    <div class="absolute inset-0 bg-cover bg-center opacity-60"
+         style="background-image: url('图片/评分3.jpg');"></div>
+    <div class="absolute inset-0 bg-white/50 transition-all duration-300 hover:bg-white/40"></div>
+    
+    <!-- 内容层：文字居中放大 + 统一红棕色调 -->
+    <div class="relative z-10 w-full">
+        <!-- 标题居中放大 + 红棕色调 + 图标装饰 -->
+        <h3 class="font-bold text-xl mb-6 text-center text-[#9A482A] transition-all duration-300 hover:text-[#7a381f] cute-font">
+            <i class="fa fa-book mr-2"></i>
+            评分规则
+            <i class="fa fa-book ml-2"></i>
+        </h3>
+        <!-- 列表文字居中放大 + 红棕色调 + 加大行间距 -->
+        <ul class="text-base text-[#9A482A]/90 space-y-4 transition-all duration-300 hover:text-[#9A482A] max-w-lg mx-auto">
+            <li class="flex items-start py-2 justify-center">
+                <i class="fa fa-check-circle text-green-600 mt-1 mr-3 transition-all duration-300 hover:text-green-700"></i>
+                <span><strong>基础分 (100分)：</strong> 所有注册用户初始默认拥有100分。</span>
+            </li>
+            <li class="flex items-start py-2 justify-center">
+                <i class="fa fa-plus-circle text-blue-600 mt-1 mr-3 transition-all duration-300 hover:text-blue-700"></i>
+                <span><strong>奖励分：</strong> 完善宠物疫苗信息 (+10)、获得社区表彰 (+20) 等。</span>
+            </li>
+            <li class="flex items-start py-2 justify-center">
+                <i class="fa fa-minus-circle text-red-600 mt-1 mr-3 transition-all duration-300 hover:text-red-700"></i>
+                <span><strong>违规扣分：</strong> 未牵绳 (-5)、未清理粪便 (-10)、扰民 (-5) 等。</span>
+            </li>
+        </ul>
+    </div>
+</div>
+</main>
+
+    <script>
+        async function loadScoreDetail() {
+            try {
+                const token = localStorage.getItem('petx_token') || '';
+                const res = await fetch('http://localhost:3000/api/user/score', {
+                    headers: { 'x-auth-token': token },
+                    credentials: 'include'
+                });
+                const json = await res.json();
+                
+                if (json.code === 200) {
+                    const d = json.data;
+                    renderPage(d);
+                } else {
+                    alert('请先登录');
+                    window.location.href = 'login.html';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderPage(data) {
+            // 1. 核心分数
+            document.getElementById('total-score').innerText = data.total;
+            const level = data.total >= 100 ? '🌟 模范铲屎官' : (data.total >= 80 ? '👍 优秀养宠人' : '⚠️ 需加强管理');
+            const levelEl = document.getElementById('score-level');
+            levelEl.innerText = level;
+            levelEl.className = `inline-block px-4 py-1 rounded-full text-sm font-bold ${data.total >= 90 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`;
+
+            // 2. 扣分列表
+            const list = document.getElementById('deduction-list');
+            const map = {
+                leash: '未牵绳',
+                feces: '未清理粪便',
+                noise: '宠物扰民',
+                vaccine: '疫苗逾期',
+                cert: '无证养犬',
+                public_area: '闯入公共区',
+                other: '其他违规'
+            };
+            
+            let html = '';
+            let totalDeduction = 0;
+            
+            for (let k in data.deductions) {
+                const val = data.deductions[k];
+                if (val > 0) {
+                    totalDeduction += val;
+                    html += `
+                        <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                            <span class="text-gray-700">${map[k] || k}</span>
+                            <span class="font-bold text-red-500">-${val}</span>
+                        </div>
+                    `;
+                }
+            }
+            
+            if (html === '') {
+                html = '<div class="text-center text-gray-400 py-4">太棒了！暂无扣分记录 🎉</div>';
+            }
+            list.innerHTML = html;
+
+            // 3. 图表
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['当前得分', '累计扣分', '累计奖励'],
+                    datasets: [{
+                        data: [data.total, totalDeduction, data.bonus],
+                        backgroundColor: ['#c2410c', '#EF4444', '#10B981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        loadScoreDetail();
+    </script>
+    <script src="agent-widget.js"></script>
+    <script src="page-transition.js"></script>
+</body>
+</html>

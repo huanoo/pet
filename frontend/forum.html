@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宠物讨论区 - PetX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 优先引入新版Font Awesome，解决fa-dog图标显示问题（4.7.0无fa-dog，6.x版本支持） -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入站酷快乐体（ZCOOL KuaiLe）- 和参考代码保持一致的可爱字体 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* 全局基础字体：和参考代码一致，优先使用站酷快乐体，兜底微软雅黑 */
+        body { 
+            font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', sans-serif; 
+            color: #333; 
+            background-color: #f5f5f5;
+            letter-spacing: 0.4px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* 核心可爱字体类：完全复用参考代码的配置，强制优先级 */
+        .cute-font {
+            font-family: "ZCOOL KuaiLe", "Microsoft YaHei", "Arial", sans-serif !important;
+            letter-spacing: 0.4px;
+            font-weight: 500;
+        }
+        /* 输入框/按钮的可爱字体优化：调整字间距和字重，避免拥挤 */
+        input.cute-font,
+        button.cute-font {
+            letter-spacing: 0;
+            font-weight: 400;
+        }
+        /* 纯英文标识优化：单独指定Arial，保证英文挺拔 */
+        .cute-font span:only-child,
+        .cute-font h1 span {
+            font-family: "Arial", "Helvetica", sans-serif !important;
+            font-weight: 700;
+        }
+        .card { border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); background: white; }
+        .category-active { background-color: #eff6ff; color: #3b82f6; border-left: 3px solid #3b82f6; }
+        .badge-hot { background-color: #f87171; color: white; }
+        .badge-new { background-color: #34d399; color: white; }
+        .badge-top { background-color: #6366f1; color: white; }
+    </style>
+</head>
+<body>
+<!-- 顶部导航 -->
+<nav class="bg-[#9A482A] shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+            <!-- 左侧：PetX左侧使用可正常显示的完整小狗图标 -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border-2 border-[#7c3c22]">
+                    <!-- 方案1：使用Font Awesome 6.x的完整小狗图标（推荐） -->
+                    <i class="fa-solid fa-dog text-[#9A482A] text-2xl"></i>
+                    
+                    <!-- 方案2：备用-emoji小狗图标（如果Font Awesome仍无法显示，取消注释使用） -->
+                    <!-- <span class="text-[#9A482A] text-3xl">🐶</span> -->
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-white cute-font">PetX</span>
+                    <span class="text-white text-sm">🐾</span>
+                    <span class="text-xl font-medium text-[#F8E9D8] cute-font">养宠平台</span>
+                </div>
+            </div>
+            <!-- 右侧：搜索框+按钮样式保持不变 -->
+            <div class="flex items-center space-x-6">
+                <div class="relative">
+                    <input type="text" placeholder="搜索帖子/话题" class="px-4 py-2 pl-10 rounded-full border border-[#7c3c22] bg-white text-[#7c3c22] cute-font focus:outline-none focus:ring-2 focus:ring-[#F8E9D8] focus:border-transparent">
+                    <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7c3c22]"></i>
+                </div>
+                <button onclick="window.location.href = 'user.html'"
+                    class="py-2 px-5 rounded-full bg-white text-[#9A482A] font-medium cute-font hover:bg-[#F8E9D8] hover:shadow-lg transition-all duration-300 flex items-center gap-2">
+                    <i class="fa fa-sign-out"></i>
+                    <span>返回首页</span>
+                    <span class="text-xs">🐾</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+
+    <!-- 主内容区 -->
+    <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-6">
+    <!-- 左侧分类导航 -->
+<div class="w-full md:w-64 shrink-0 flex flex-col h-full">
+    <!-- 论坛分类卡片 - 拆分为标题区+内容区 -->
+    <div class="card mb-6 relative overflow-hidden"
+         style="border: 1px solid #A65233/20;">
+        <!-- 标题区块：背景同顶部导航#9A482A + 居中 + 白色文字/图标 -->
+        <div class="bg-[#9A482A] py-4 px-6 text-center">
+            <h3 class="text-lg font-bold text-white mb-0 flex items-center justify-center gap-2 cute-font">
+                <i class="fa fa-paw text-white"></i>
+                论坛分类
+                <i class="fa fa-paw text-white"></i>
+            </h3>
+        </div>
+        <!-- 内容区块：浅色渐变背景 + 棕色文字 + 恢复原图标颜色 + 角标/hover动画修改 -->
+        <div class="p-6" style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10);">
+            <ul class="space-y-1">
+                <li>
+                    <a href="#" class="category-active flex items-center px-3 py-2 rounded-md cute-font transition-all duration-300 ease-in-out"
+                       style="background: #f8f9fa; border-left: 3px solid #9A482A; color: #9A482A; transform: translateX(0);">
+                        <i class="fa fa-fire text-orange-500 mr-3"></i>
+                        <span>综合讨论</span>
+                        <span class="ml-auto text-xs bg-[#9A482A] text-white rounded-full px-2 py-0.5 font-medium">128</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 rounded-md hover:bg-white/90 hover:shadow-md hover:-translate-x-1 transition-all duration-300 ease-in-out cute-font"
+                       style="color: #9A482A; transform: translateX(0);">
+                        <i class="fa fa-paw text-green-500 mr-3"></i>
+                        <span>狗狗专区</span>
+                        <span class="ml-auto text-xs bg-[#9A482A] text-white rounded-full px-2 py-0.5 font-medium">89</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 rounded-md hover:bg-white/90 hover:shadow-md hover:-translate-x-1 transition-all duration-300 ease-in-out cute-font"
+                       style="color: #9A482A; transform: translateX(0);">
+                        <i class="fa fa-cat text-purple-500 mr-3"></i>
+                        <span>猫咪专区</span>
+                        <span class="ml-auto text-xs bg-[#9A482A] text-white rounded-full px-2 py-0.5 font-medium">105</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 rounded-md hover:bg-white/90 hover:shadow-md hover:-translate-x-1 transition-all duration-300 ease-in-out cute-font"
+                       style="color: #9A482A; transform: translateX(0);">
+                        <i class="fa fa-heart text-red-500 mr-3"></i>
+                        <span>养宠经验</span>
+                        <span class="ml-auto text-xs bg-[#9A482A] text-white rounded-full px-2 py-0.5 font-medium">76</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 rounded-md hover:bg-white/90 hover:shadow-md hover:-translate-x-1 transition-all duration-300 ease-in-out cute-font"
+                       style="color: #9A482A; transform: translateX(0);">
+                        <i class="fa fa-medkit text-blue-500 mr-3"></i>
+                        <span>健康医疗</span>
+                        <span class="ml-auto text-xs bg-[#9A482A] text-white rounded-full px-2 py-0.5 font-medium">63</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-3 py-2 rounded-md hover:bg-white/90 hover:shadow-md hover:-translate-x-1 transition-all duration-300 ease-in-out cute-font"
+                       style="color: #9A482A; transform: translateX(0);">
+                        <i class="fa fa-gift text-yellow-500 mr-3"></i>
+                        <span>宠物用品</span>
+                        <span class="ml-auto text-xs bg-[#9A482A] text-white rounded-full px-2 py-0.5 font-medium">58</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 热门话题 -->
+    <div class="card mb-6 relative overflow-hidden"
+         style="border: 1px solid #A65233/20;">
+        <!-- 标题区块：背景同顶部导航#9A482A + 居中 + 白色文字 -->
+        <div class="bg-[#9A482A] py-4 px-6 text-center">
+            <h3 class="text-lg font-bold text-white mb-0 flex items-center justify-center gap-2 cute-font">
+                <i class="fa fa-fire text-white"></i>
+                热门话题
+                <i class="fa fa-fire text-white"></i>
+            </h3>
+        </div>
+        <!-- 内容区块：浅色渐变背景 + 棕色文字 + 优化排名角标（区分更明显） + hover动画 -->
+        <div class="p-6" style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10);">
+            <ul class="space-y-3">
+                <li class="flex items-center transition-all duration-300 ease-in-out hover:translate-x-1 hover:bg-white/80 p-2 rounded-md">
+                    <!-- 第1名：亮红色（更醒目） -->
+                    <span class="w-7 h-7 flex items-center justify-center bg-red-600 text-white rounded-full text-sm mr-2 cute-font font-bold shadow-sm">1</span>
+                    <a href="#" class="text-[#9A482A] hover:text-[#7a381f] truncate cute-font">#夏季宠物防暑指南#</a>
+                </li>
+                <li class="flex items-center transition-all duration-300 ease-in-out hover:translate-x-1 hover:bg-white/80 p-2 rounded-md">
+                    <!-- 第2名：橙黄色（和第1名区分明显） -->
+                    <span class="w-7 h-7 flex items-center justify-center bg-orange-500 text-white rounded-full text-sm mr-2 cute-font font-bold shadow-sm">2</span>
+                    <a href="#" class="text-[#9A482A] hover:text-[#7a381f] truncate cute-font">#新手养猫必看#</a>
+                </li>
+                <li class="flex items-center transition-all duration-300 ease-in-out hover:translate-x-1 hover:bg-white/80 p-2 rounded-md">
+                    <!-- 第3名：金黄色（和前两名形成渐变层次） -->
+                    <span class="w-7 h-7 flex items-center justify-center bg-yellow-500 text-white rounded-full text-sm mr-2 cute-font font-bold shadow-sm">3</span>
+                    <a href="#" class="text-[#9A482A] hover:text-[#7a381f] truncate cute-font">#狗狗训练小技巧#</a>
+                </li>
+                <li class="flex items-center transition-all duration-300 ease-in-out hover:translate-x-1 hover:bg-white/80 p-2 rounded-md">
+                    <!-- 第4名：深棕色（主色调加深，和前3名区分） -->
+                    <span class="w-7 h-7 flex items-center justify-center bg-[#803a22] text-white rounded-full text-sm mr-2 cute-font font-bold shadow-sm">4</span>
+                    <a href="#" class="text-[#9A482A] hover:text-[#7a381f] truncate cute-font">#自制宠物零食#</a>
+                </li>
+                <li class="flex items-center transition-all duration-300 ease-in-out hover:translate-x-1 hover:bg-white/80 p-2 rounded-md">
+                    <!-- 第5名：浅棕色（和第4名形成深浅对比） -->
+                    <span class="w-7 h-7 flex items-center justify-center bg-[#b4643b] text-white rounded-full text-sm mr-2 cute-font font-bold shadow-sm">5</span>
+                    <a href="#" class="text-[#9A482A] hover:text-[#7a381f] truncate cute-font">#宠物行为解读#</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 活跃用户 -->
+    <div class="card p-4 relative rounded-lg overflow-hidden mb-6">
+        <!-- 标题区块：背景填满+圆角适配+无尖角 -->
+        <h3 class="font-bold text-lg mb-4 border-b border-[#A65233]/20 pb-2 cute-font text-center bg-[#9A482A] text-white py-3 -mx-4 px-4 -mt-4 rounded-t-lg">
+            <i class="fa fa-user-circle mr-2"></i>
+            活跃用户
+            <i class="fa fa-user-circle ml-2"></i>
+        </h3>
+        <!-- 内容区块：保持原布局/尺寸+圆角hover -->
+        <ul class="space-y-3">
+            <li class="flex items-center transition-all duration-300 ease-in-out hover:bg-white/80 rounded-md">
+                <img src="https://picsum.photos/40/40?random=30" alt="用户头像" class="w-10 h-10 rounded-full mr-3 border-2 border-[#9A482A]">
+                <div>
+                    <a href="#" class="font-medium text-[#9A482A] hover:text-[#7a381f] cute-font">铲屎官小李</a>
+                    <p class="text-xs text-[#803a22] opacity-80 cute-font">发帖 128 | 获赞 3.2k</p>
+                </div>
+            </li>
+            <li class="flex items-center transition-all duration-300 ease-in-out hover:bg-white/80 rounded-md">
+                <img src="https://picsum.photos/40/40?random=31" alt="用户头像" class="w-10 h-10 rounded-full mr-3 border-2 border-[#9A482A]">
+                <div>
+                    <a href="#" class="font-medium text-[#9A482A] hover:text-[#7a381f] cute-font">猫主子的日常</a>
+                    <p class="text-xs text-[#803a22] opacity-80 cute-font">发帖 96 | 获赞 2.8k</p>
+                </div>
+            </li>
+            <li class="flex items-center transition-all duration-300 ease-in-out hover:bg-white/80 rounded-md">
+                <img src="https://picsum.photos/40/40?random=32" alt="用户头像" class="w-10 h-10 rounded-full mr-3 border-2 border-[#9A482A]">
+                <div>
+                    <a href="#" class="font-medium text-[#9A482A] hover:text-[#7a381f] cute-font">狗狗训练营</a>
+                    <p class="text-xs text-[#803a22] opacity-80 cute-font">发帖 87 | 获赞 2.5k</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+   <!-- 直接替换你原来的图片div即可 -->
+<div class="mt-12">
+    <img 
+        src="图片/讨论区左.jpg"  <!-- 600×800=3:4 竖版高图，狗狗头像 -->
+       
+</div>
+</div>
+
+
+
+<!-- 中间帖子列表 -->
+        <div class="flex-1">
+<!-- 帖子筛选：整体棕背景 + 按钮小方框白背景棕文字 + 选中态浅棕色 -->
+<div class="card p-4 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg overflow-hidden" style="border: 1px solid #A65233/20; background-color: #9A482A;">
+    <div class="flex space-x-2">
+        <!-- 选中态：浅棕色小方框 + 深棕色文字 -->
+        <button class="px-4 py-1.5 bg-[#FFE0D0] text-[#803a22] rounded-md hover:bg-[#FFD0C0] transition-all duration-300 cute-font flex items-center">
+            <i class="fa fa-paw mr-1 text-[#803a22]"></i>最新
+        </button>
+        <!-- 未选中态：白色小方框 + 棕色文字 + 浅棕边框 -->
+        <button class="px-4 py-1.5 bg-white text-[#9A482A] rounded-md hover:bg-[#FFE0D0] transition-all duration-300 cute-font border border-[#A65233]/20">热门</button>
+        <button class="px-4 py-1.5 bg-white text-[#9A482A] rounded-md hover:bg-[#FFE0D0] transition-all duration-300 cute-font border border-[#A65233]/20">精华</button>
+        <button class="px-4 py-1.5 bg-white text-[#9A482A] rounded-md hover:bg-[#FFE0D0] transition-all duration-300 cute-font border border-[#A65233]/20">悬赏</button>
+    </div>
+    <div class="flex items-center">
+        <span class="text-white mr-2 cute-font">排序：</span>
+        <!-- 下拉框小方框：白色背景 + 棕色文字 -->
+        <select class="px-3 py-1.5 border border-[#A65233]/20 rounded-md text-[#9A482A] bg-white hover:bg-[#FFE0D0] transition-all duration-300 cute-font">
+            <option>最新回复</option>
+            <option>发布时间</option>
+            <option>浏览量</option>
+            <option>点赞数</option>
+        </select>
+    </div>
+</div>
+
+<!-- 发布按钮：棕色背景 + 文字居中 + hover浅棕效果 + 仅铅笔图标 + 右侧布局 -->
+<div class="mb-6 flex items-start justify-end">
+    <button id="publishBtn" class="px-8 py-3 bg-[#9A482A] text-white rounded-lg transition-all duration-300 flex items-center justify-center shadow-md hover:bg-[#FFE0D0] hover:text-[#803a22] hover:shadow-lg cute-font w-auto min-w-[180px]">
+        <i class="fa fa-pencil mr-2"></i> 发布新帖
+    </button>
+</div>
+
+<!-- 发布帖子弹窗（紧凑尺寸+均匀排布+图片上传） -->
+<div id="publishModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden" style="display: none;">
+    <!-- 弹窗主体：缩小最大宽度+紧凑内边距 -->
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 overflow-hidden cute-font border-2 border-[#E8D4C0]">
+        <!-- 弹窗头部：缩小内边距 -->
+        <div class="bg-[#9A482A] px-4 py-3 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa fa-pencil"></i>
+                <span>发布新帖</span>
+                <span class="text-xs">🐾</span>
+            </h3>
+            <button id="closeModal" class="text-white hover:text-[#FFE0D0] transition-colors">
+                <i class="fa fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <!-- 弹窗表单内容：超紧凑排布 -->
+        <div class="p-4 bg-[#F8F2ED]">
+            <form id="publishForm" class="space-y-4"> <!-- 更小的垂直间距 -->
+                <!-- 标题输入框 -->
+                <div class="w-full">
+                    <label class="block text-[#803a22] font-medium mb-1 text-sm">帖子标题 </label>
+                    <input type="text" placeholder="请输入标题（必填）" class="w-full px-3 py-2 rounded-lg border-2 border-[#E8D4C0] focus:border-[#9A482A] focus:outline-none bg-white text-[#333] cute-font text-sm">
+                </div>
+
+                <!-- 分类选择 -->
+                <div class="w-full">
+                    <label class="block text-[#803a22] font-medium mb-1 text-sm">帖子分类 </label>
+                    <select class="w-full px-3 py-2 rounded-lg border-2 border-[#E8D4C0] focus:border-[#9A482A] focus:outline-none bg-white text-[#333] cute-font text-sm">
+                        <option value="">请选择分类</option>
+                        <option value="group">团购专区</option>
+                        <option value="help">养宠互助</option>
+                        <option value="foster">宠物寄养</option>
+                    </select>
+                </div>
+
+                <!-- 帖子图片 -->
+                <div class="w-full">
+                    <label class="block text-[#803a22] font-medium mb-1 text-sm">帖子图片 </label>
+                    <div class="flex flex-col gap-2">
+                        <!-- 图片上传按钮 -->
+                        <label class="px-3 py-2 bg-white border-2 border-dashed border-[#E8D4C0] rounded-lg cursor-pointer hover:border-[#9A482A] transition-colors text-center text-sm">
+                            <input type="file" accept="image/*" class="hidden" id="postImage">
+                            <i class="fa fa-upload text-[#9A482A] mr-1"></i>
+                            <span class="text-[#803a22]">上传图片（可选）</span>
+                        </label>
+                        <!-- 图片预览区域：缩小高度 -->
+                        <div id="imagePreview" class="hidden w-full h-32 border-2 border-[#E8D4C0] rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                            <img id="previewImg" src="" alt="帖子图片预览" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 内容编辑框：缩小行数+内边距 -->
+                <div class="w-full">
+                    <label class="block text-[#803a22] font-medium mb-1 text-sm">帖子内容 </label>
+                    <textarea rows="4" placeholder="请输入内容（必填）" class="w-full px-3 py-2 rounded-lg border-2 border-[#E8D4C0] focus:border-[#9A482A] focus:outline-none bg-white text-[#333] cute-font text-sm resize-none"></textarea>
+                </div>
+
+                <!-- 提交按钮区域：紧凑尺寸 -->
+                <div class="flex justify-center gap-4 pt-2 border-t border-[#E8D4C0] pt-3">
+                    <button type="button" id="cancelBtn" class="px-6 py-2 rounded-lg border-2 border-[#9A482A] text-[#9A482A] hover:bg-[#F8E9D8] transition-colors cute-font min-w-[100px] text-sm">
+                        取消
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-[#9A482A] text-white rounded-lg hover:bg-[#FFE0D0] hover:text-[#803a22] transition-colors shadow-md cute-font min-w-[100px] text-sm">
+                        <i class="fa fa-paper-plane mr-1"></i> 发布
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 交互逻辑JS -->
+<script>
+// 获取元素
+const publishBtn = document.getElementById('publishBtn');
+const publishModal = document.getElementById('publishModal');
+const closeModal = document.getElementById('closeModal');
+const cancelBtn = document.getElementById('cancelBtn');
+const postImage = document.getElementById('postImage');
+const imagePreview = document.getElementById('imagePreview');
+const previewImg = document.getElementById('previewImg');
+
+// 打开弹窗
+publishBtn.addEventListener('click', () => {
+    publishModal.classList.remove('hidden');
+    publishModal.classList.add('animate-fade-in');
+    publishModal.style.display = 'flex';
+});
+
+// 关闭弹窗
+function closeModalFunc() {
+    publishModal.classList.add('hidden');
+    publishModal.style.display = 'none';
+    document.getElementById('publishForm').reset();
+    imagePreview.classList.add('hidden');
+    previewImg.src = '';
+}
+closeModal.addEventListener('click', closeModalFunc);
+cancelBtn.addEventListener('click', closeModalFunc);
+
+// 点击弹窗外部关闭
+publishModal.addEventListener('click', (e) => {
+    if (e.target === publishModal) {
+        closeModalFunc();
+    }
+});
+
+// 图片上传预览
+postImage.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            previewImg.src = event.target.result;
+            imagePreview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        imagePreview.classList.add('hidden');
+        previewImg.src = '';
+    }
+});
+
+// 表单提交
+document.getElementById('publishForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    alert('帖子发布成功！🐾');
+    closeModalFunc();
+});
+
+// 淡入动画样式
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+`;
+document.head.appendChild(style);
+</script>
+
+    <!-- 帖子列表：统一红棕风格 + 保留原有图片 + 优化视觉效果 + 颜色标签适配 + 差异化图标颜色 -->
+<div class="space-y-6">
+    <!-- 置顶帖子 -->
+    <div class="card p-6 relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden border-t-2 border-t-[#A65233]"
+         style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+        <!-- 背景狗爪装饰 -->
+        <div class="absolute bottom-0 right-0 text-[#D4B190]/10 z-0">
+            <i class="fa fa-paw text-[180px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+        </div>
+        
+        <div class="relative z-10">
+            <div class="flex justify-between mb-4">
+                <div class="flex items-center">
+                    <!-- 置顶：蓝色标签 -->
+                    <span class="px-2 py-1 rounded-full text-xs mr-2 bg-blue-500 text-white">置顶</span>
+                    <!-- 热门：红色标签 -->
+                    <span class="px-2 py-1 rounded-full text-xs mr-2 bg-red-500 text-white">热门</span>
+                    <a href="#" class="font-bold text-xl text-[#6D4C41] hover:text-[#A65233] transition-colors">【精华】养宠新手必看！从0开始的科学养宠指南</a>
+                </div>
+                <!-- 综合讨论：蓝色系 -->
+                <span class="text-blue-600 text-sm">综合讨论</span>
+            </div>
+            <div class="flex items-center mb-4 bg-white/80 rounded-sm p-3 backdrop-blur-sm">
+                <img src="https://picsum.photos/40/40?random=40" alt="作者头像" class="w-8 h-8 rounded-full mr-2 border-2 border-[#E68A48]">
+                <a href="#" class="text-[#6D4C41] hover:text-[#A65233] mr-3 transition-colors">宠物医生王大夫</a>
+                <span class="text-[#A65233]/80 text-sm">发布于 2024-04-01</span>
+            </div>
+            <p class="text-[#6D4C41] mb-4 line-clamp-2 bg-white/80 rounded-sm p-3 backdrop-blur-sm">本文详细介绍新手养宠需要注意的各个方面，包括饮食、健康、训练、日常护理等，帮助新手快速掌握科学养宠的基本知识和技巧...</p>
+            <div class="flex items-center justify-between text-sm text-[#A65233]/80">
+                <div class="flex space-x-4 bg-white/80 rounded-sm p-3 backdrop-blur-sm">
+                    <!-- 浏览图标：浅橙棕 #E68A48 -->
+                    <span><i class="fa fa-eye mr-1 text-[#E68A48]"></i> 12.5k</span>
+                    <!-- 评论图标：深棕红 #8B4513 -->
+                    <span><i class="fa fa-comment mr-1 text-[#8B4513]"></i> 328</span>
+                    <!-- 点赞图标：暖焦糖棕 #D2691E -->
+                    <span><i class="fa fa-thumbs-up mr-1 text-[#D2691E]"></i> 896</span>
+                </div>
+                <div>
+                    <img src="图片/置顶帖.jpg" alt="帖子封面" class="w-40 h-20 object-cover rounded-md border border-[#A65233]/20">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 普通帖子1 -->
+    <div class="card p-6 relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden border-t-2 border-t-[#A65233]"
+         style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+        <!-- 背景狗爪装饰 -->
+        <div class="absolute bottom-0 right-0 text-[#D4B190]/10 z-0">
+            <i class="fa fa-paw text-[180px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+        </div>
+        
+        <div class="relative z-10">
+            <div class="flex justify-between mb-4">
+                <div class="flex items-center">
+                    <!-- 新帖：绿色标签 -->
+                    <span class="px-2 py-1 rounded-full text-xs mr-2 bg-green-500 text-white">新帖</span>
+                    <a href="#" class="font-bold text-xl text-[#6D4C41] hover:text-[#A65233] transition-colors">我家金毛的训练日记，从拆家狂魔到乖宝宝</a>
+                </div>
+                <!-- 狗狗专区：琥珀色/黄色系 -->
+                <span class="text-amber-600 text-sm">狗狗专区</span>
+            </div>
+            <div class="flex items-center mb-4 bg-white/80 rounded-sm p-3 backdrop-blur-sm">
+                <img src="https://picsum.photos/40/40?random=42" alt="作者头像" class="w-8 h-8 rounded-full mr-2 border-2 border-[#E68A48]">
+                <a href="#" class="text-[#6D4C41] hover:text-[#A65233] mr-3 transition-colors">金毛铲屎官</a>
+                <span class="text-[#A65233]/80 text-sm">发布于 2024-04-20</span>
+            </div>
+            <p class="text-[#6D4C41] mb-4 line-clamp-2 bg-white/80 rounded-sm p-3 backdrop-blur-sm">分享我家金毛3个月的训练过程，从一开始的拆家、乱叫，到现在听话懂事，总结了一些实用的训练方法和心得...</p>
+            <div class="flex items-center justify-between text-sm text-[#A65233]/80">
+                <div class="flex space-x-4 bg-white/80 rounded-sm p-3 backdrop-blur-sm">
+                    <span><i class="fa fa-eye mr-1 text-[#E68A48]"></i> 3.8k</span>
+                    <span><i class="fa fa-comment mr-1 text-[#8B4513]"></i> 86</span>
+                    <span><i class="fa fa-thumbs-up mr-1 text-[#D2691E]"></i> 245</span>
+                </div>
+                <div class="flex space-x-1">
+                    <img src="图片/金毛1.jpg" alt="图片1" class="w-16 h-16 object-cover rounded-md border border-[#A65233]/20">
+                    <img src="图片/金毛2.jpg" alt="图片2" class="w-16 h-16 object-cover rounded-md border border-[#A65233]/20">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 普通帖子2 -->
+    <div class="card p-6 relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden border-t-2 border-t-[#A65233]"
+         style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+        <!-- 背景狗爪装饰 -->
+        <div class="absolute bottom-0 right-0 text-[#D4B190]/10 z-0">
+            <i class="fa fa-paw text-[180px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+        </div>
+        
+        <div class="relative z-10">
+            <div class="flex justify-between mb-4">
+                <a href="#" class="font-bold text-xl text-[#6D4C41] hover:text-[#A65233] transition-colors">猫咪为什么总喜欢踩奶？终于找到答案了</a>
+                <!-- 猫咪专区：紫色系 -->
+                <span class="text-purple-600 text-sm">猫咪专区</span>
+            </div>
+            <div class="flex items-center mb-4 bg-white/80 rounded-sm p-3 backdrop-blur-sm">
+                <img src="https://picsum.photos/40/40?random=45" alt="作者头像" class="w-8 h-8 rounded-full mr-2 border-2 border-[#E68A48]">
+                <a href="#" class="text-[#6D4C41] hover:text-[#A65233] mr-3 transition-colors">猫咪研究员</a>
+                <span class="text-[#A65233]/80 text-sm">发布于 2024-04-18</span>
+            </div>
+            <p class="text-[#6D4C41] mb-4 line-clamp-2 bg-white/80 rounded-sm p-3 backdrop-blur-sm">很多铲屎官都发现自家猫咪喜欢踩奶，这到底是什么原因？本文从猫咪的行为学角度详细解析踩奶的各种原因和含义...</p>
+            <div class="flex items-center justify-between text-sm text-[#A65233]/80">
+                <div class="flex space-x-4 bg-white/80 rounded-sm p-3 backdrop-blur-sm">
+                    <span><i class="fa fa-eye mr-1 text-[#E68A48]"></i> 5.2k</span>
+                    <span><i class="fa fa-comment mr-1 text-[#8B4513]"></i> 128</span>
+                    <span><i class="fa fa-thumbs-up mr-1 text-[#D2691E]"></i> 368</span>
+                </div>
+                <div>
+                    <img src="图片/猫咪踩奶.jpg" alt="帖子封面" class="w-40 h-20 object-cover rounded-md border border-[#A65233]/20">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 普通帖子3 -->
+    <div class="card p-6 relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden border-t-2 border-t-[#A65233]"
+         style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+        <!-- 背景狗爪装饰 -->
+        <div class="absolute bottom-0 right-0 text-[#D4B190]/10 z-0">
+            <i class="fa fa-paw text-[180px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+        </div>
+        
+        <div class="relative z-10">
+            <div class="flex justify-between mb-4">
+                <a href="#" class="font-bold text-xl text-[#6D4C41] hover:text-[#A65233] transition-colors">自制无添加宠物零食，健康又放心</a>
+                <!-- 养宠经验：祖母绿色/深绿色系 -->
+                <span class="text-emerald-600 text-sm">养宠经验</span>
+            </div>
+            <div class="flex items-center mb-4 bg-white/80 rounded-sm p-3 backdrop-blur-sm">
+                <img src="https://picsum.photos/40/40?random=47" alt="作者头像" class="w-8 h-8 rounded-full mr-2 border-2 border-[#E68A48]">
+                <a href="#" class="text-[#6D4C41] hover:text-[#A65233] mr-3 transition-colors">美食铲屎官</a>
+                <span class="text-[#A65233]/80 text-sm">发布于 2024-04-15</span>
+            </div>
+            <p class="text-[#6D4C41] mb-4 line-clamp-2 bg-white/80 rounded-sm p-3 backdrop-blur-sm">分享几款简单易做的宠物零食配方，无添加、无防腐剂，材料常见，做法简单，家里的毛孩子超爱吃...</p>
+            <div class="flex items-center justify-between text-sm text-[#A65233]/80">
+                <div class="flex space-x-4 bg-white/80 rounded-sm p-3 backdrop-blur-sm">
+                    <span><i class="fa fa-eye mr-1 text-[#E68A48]"></i> 4.1k</span>
+                    <span><i class="fa fa-comment mr-1 text-[#8B4513]"></i> 96</span>
+                    <span><i class="fa fa-thumbs-up mr-1 text-[#D2691E]"></i> 289</span>
+                </div>
+                <div class="flex space-x-1">
+                    <img src="图片/宠物零食1.jpg" alt="图片1" class="w-16 h-16 object-cover rounded-md border border-[#A65233]/20">
+                    <img src="图片/宠物零食2.jpg" alt="图片2" class="w-16 h-16 object-cover rounded-md border border-[#A65233]/20">
+                    <img src="图片/宠物零食3.jpg" alt="图片3" class="w-16 h-16 object-cover rounded-md border border-[#A65233]/20">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            
+            <!-- 分页：统一红棕风格 -->
+<div class="mt-8 flex justify-center">
+    <div class="flex space-x-1">
+        <button class="px-3 py-2 bg-[#A65233]/10 text-[#6D4C41] rounded-md hover:bg-[#FFE0D0] transition-colors">上一页</button>
+        <button class="px-4 py-2 bg-[#A65233] text-white rounded-md">1</button>
+        <button class="px-4 py-2 bg-[#A65233]/10 text-[#6D4C41] rounded-md hover:bg-[#FFE0D0] transition-colors">2</button>
+        <button class="px-4 py-2 bg-[#A65233]/10 text-[#6D4C41] rounded-md hover:bg-[#FFE0D0] transition-colors">3</button>
+        <button class="px-4 py-2 bg-[#A65233]/10 text-[#6D4C41] rounded-md hover:bg-[#FFE0D0] transition-colors">4</button>
+        <button class="px-4 py-2 bg-[#A65233]/10 text-[#6D4C41] rounded-md hover:bg-[#FFE0D0] transition-colors">5</button>
+        <button class="px-3 py-2 bg-[#A65233]/10 text-[#6D4C41] rounded-md hover:bg-[#FFE0D0] transition-colors">下一页</button>
+    </div>
+</div>
+</div>
+
+
+        <!-- 右侧边栏 -->
+        <div class="w-full md:w-64 shrink-0">
+            <!-- 发帖指南 -->
+<div class="card p-6 mb-6 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
+    <!-- 背景层：加深透明度 + 白色遮罩 -->
+    <div class="absolute inset-0 bg-cover bg-center opacity-60"
+         style="background-image: url('图片/12.jpg');"></div>
+    <div class="absolute inset-0 bg-white/50 transition-all duration-300 hover:bg-white/40"></div>
+    
+    <!-- 内容层：标题居中 + 加大行间距 + 加高栏目 -->
+    <div class="relative z-10 w-full">
+        <!-- 标题居中 + 增加底部间距 -->
+        <h3 class="font-bold text-lg mb-4 text-center text-[#9A482A] transition-all duration-300 hover:text-[#7a381f]">
+            <i class="fa fa-paw mr-2"></i>
+            发帖指南
+            <i class="fa fa-paw ml-2"></i>
+        </h3>
+        <!-- 加大行间距（space-y-3）+ 加高内边距 -->
+        <ul class="text-sm text-[#9A482A]/90 space-y-3 transition-all duration-300 hover:text-[#9A482A]">
+            <li class="flex items-start py-1">
+                <i class="fa fa-check-circle text-green-600 mt-1 mr-3 transition-all duration-300 hover:text-green-700"></i>
+                <span>内容需与宠物相关，禁止无关广告</span>
+            </li>
+            <li class="flex items-start py-1">
+                <i class="fa fa-check-circle text-green-600 mt-1 mr-3 transition-all duration-300 hover:text-green-700"></i>
+                <span>禁止发布攻击性、辱骂性言论</span>
+            </li>
+            <li class="flex items-start py-1">
+                <i class="fa fa-check-circle text-green-600 mt-1 mr-3 transition-all duration-300 hover:text-green-700"></i>
+                <span>鼓励分享真实养宠经验和心得</span>
+            </li>
+            <li class="flex items-start py-1">
+                <i class="fa fa-check-circle text-green-600 mt-1 mr-3 transition-all duration-300 hover:text-green-700"></i>
+                <span>提问帖请描述清楚问题，便于解答</span>
+            </li>
+        </ul>
+    </div>
+</div>
+            
+        <!-- 论坛统计 -->
+<div class="card p-6 mb-6 relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
+    <!-- 背景层：加深透明度 + 白色遮罩（和发帖指南风格一致） -->
+    <div class="absolute inset-0 bg-cover bg-center opacity-60"
+         style="background-image: url('图片/13.jpg');"></div>
+    <div class="absolute inset-0 bg-white/50 transition-all duration-300 hover:bg-white/40"></div>
+    
+    <!-- 内容层：统一风格 + 保留数字配色 -->
+    <div class="relative z-10 w-full">
+        <!-- 标题：居中 + 狗爪图标 + 顶部导航棕色 -->
+        <h3 class="font-bold text-lg mb-4 text-center text-[#9A482A] transition-all duration-300 hover:text-[#7a381f] cute-font">
+            <i class="fa fa-paw mr-2"></i>
+            论坛统计
+            <i class="fa fa-paw ml-2"></i>
+        </h3>
+        <!-- 统计数据：保留原有数字配色 + 文字改为棕色 -->
+        <div class="grid grid-cols-2 gap-6 text-center">
+            <div class="transition-all duration-300 hover:scale-105 p-2 rounded-md hover:bg-white/60">
+                <p class="text-2xl font-bold text-blue-500 cute-font">2,589</p>
+                <p class="text-sm text-[#9A482A]/90 transition-all duration-300 hover:text-[#9A482A] cute-font">总帖子数</p>
+            </div>
+            <div class="transition-all duration-300 hover:scale-105 p-2 rounded-md hover:bg-white/60">
+                <p class="text-2xl font-bold text-green-500 cute-font">1,876</p>
+                <p class="text-sm text-[#9A482A]/90 transition-all duration-300 hover:text-[#9A482A] cute-font">注册用户</p>
+            </div>
+            <div class="transition-all duration-300 hover:scale-105 p-2 rounded-md hover:bg-white/60">
+                <p class="text-2xl font-bold text-purple-500 cute-font">328</p>
+                <p class="text-sm text-[#9A482A]/90 transition-all duration-300 hover:text-[#9A482A] cute-font">今日新增</p>
+            </div>
+            <div class="transition-all duration-300 hover:scale-105 p-2 rounded-md hover:bg-white/60">
+                <p class="text-2xl font-bold text-orange-500 cute-font">568</p>
+                <p class="text-sm text-[#9A482A]/90 transition-all duration-300 hover:text-[#9A482A] cute-font">在线用户</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+          <!-- 版主团队 -->
+<div class="card p-6 relative rounded-lg overflow-hidden">
+    <!-- 标题区块：狗爪图标 + 加高内边距 + 背景填满 -->
+    <h3 class="font-bold text-lg mb-5 border-b border-[#A65233]/20 pb-3 cute-font text-center bg-[#9A482A] text-white py-4 -mx-6 px-6 -mt-6 rounded-t-lg">
+        <i class="fa fa-paw mr-2"></i>
+        版主团队
+        <i class="fa fa-paw ml-2"></i>
+    </h3>
+    <!-- 内容区块：新增版主信息 + 加高间距 + 统一风格 -->
+    <ul class="space-y-4">
+        <li class="flex items-center transition-all duration-300 ease-in-out hover:bg-white/80 rounded-md p-1">
+            <img src="https://picsum.photos/40/40?random=60" alt="版主头像" class="w-10 h-10 rounded-full mr-3 border-2 border-[#9A482A]">
+            <div>
+                <a href="#" class="font-medium text-[#9A482A] hover:text-[#7a381f] cute-font">宠物管理员</a>
+                <p class="text-xs text-[#803a22] opacity-80 cute-font">总版主</p>
+            </div>
+        </li>
+        <li class="flex items-center transition-all duration-300 ease-in-out hover:bg-white/80 rounded-md p-1">
+            <img src="https://picsum.photos/40/40?random=61" alt="版主头像" class="w-10 h-10 rounded-full mr-3 border-2 border-[#9A482A]">
+            <div>
+                <a href="#" class="font-medium text-[#9A482A] hover:text-[#7a381f] cute-font">狗狗版主</a>
+                <p class="text-xs text-[#803a22] opacity-80 cute-font">狗狗专区版主</p>
+            </div>
+        </li>
+        <li class="flex items-center transition-all duration-300 ease-in-out hover:bg-white/80 rounded-md p-1">
+            <img src="https://picsum.photos/40/40?random=62" alt="版主头像" class="w-10 h-10 rounded-full mr-3 border-2 border-[#9A482A]">
+            <div>
+                <a href="#" class="font-medium text-[#9A482A] hover:text-[#7a381f] cute-font">猫咪版主</a>
+                <p class="text-xs text-[#803a22] opacity-80 cute-font">猫咪专区版主</p>
+            </div>
+        </li>
+        <li class="flex items-center transition-all duration-300 ease-in-out hover:bg-white/80 rounded-md p-1">
+            <img src="https://picsum.photos/40/40?random=63" alt="版主头像" class="w-10 h-10 rounded-full mr-3 border-2 border-[#9A482A]">
+            <div>
+                <a href="#" class="font-medium text-[#9A482A] hover:text-[#7a381f] cute-font">养宠答疑师</a>
+                <p class="text-xs text-[#803a22] opacity-80 cute-font">健康医疗版主</p>
+            </div>
+        </li>
+    </ul>
+</div>
+<!-- 新增：右侧装饰图片区域 - 无边框+大尺寸+竖版高图+适配风格 -->
+<div class="flex-grow mt-8"> <!-- 核心修改：添加 mt-8 类（或自定义style） -->
+    <img 
+        src="图片/讨论区右.jpg"  <!-- 3:4竖版高图（猫咪主题），和左侧呼应 -->
+        
+</div>
+        </div>
+    </div>
+    <script src="agent-widget.js"></script>
+    <script src="page-transition.js"></script>
+</body>
+</html>

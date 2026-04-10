@@ -1,0 +1,12 @@
+{
+  "liveServer.settings.port": 5500,
+  "liveServer.settings.open": true,
+  "liveServer.settings.ignoreFiles": [
+    ".vscode/**",
+    "**/backend/**",
+    "**/*.md",
+    "**/*.log"
+  ],
+  "liveServer.settings.donotShowInfoMsg": true,
+  "liveServer.settings.donotVerifyTags": true
+}

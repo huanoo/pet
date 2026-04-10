@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetX - 积分兑换商城</title>
+    <!-- 引入第三方库 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PetX专属可爱字体配置 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+    <!-- Tailwind 自定义配置：匹配PetX配色和阴影 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#9A482A', // PetX主色调（焦糖红棕）
+                        secondary: '#F8E9D8', // 辅助浅色
+                        accent: '#E68A48', // 提亮色
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        neutral: {
+                            50: '#F9FAFB',
+                            100: '#F3F4F6',
+                            200: '#E5E7EB',
+                            300: '#D1D5DB'
+                        }
+                    },
+                    boxShadow: {
+                        'card': '0 4px 12px rgba(154, 72, 42, 0.1)',
+                        'card-hover': '0 8px 24px rgba(154, 72, 42, 0.15)',
+                        'btn': '0 2px 4px rgba(154, 72, 42, 0.2)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-transition {
+                @apply transition-all duration-300 ease-in-out;
+            }
+            .btn-primary {
+                @apply bg-primary text-white py-2 px-4 rounded-md hover:bg-[#7c3c22] shadow-btn transition-all duration-200;
+            }
+            .btn-secondary {
+                @apply bg-secondary text-[#7c3c22] py-2 px-4 rounded-md hover:bg-[#e8d4c0] transition-all duration-200;
+            }
+            .glass-effect {
+                @apply bg-white/90 backdrop-blur-md border border-[#9A482A]/10;
+            }
+        }
+    </style>
+    <style>
+        /* 全局样式：匹配PetX的字体和基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', sans-serif;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            letter-spacing: 0.4px;
+            background-color: #F9FAFB;
+        }
+        
+        /* 懒加载图片样式 */
+        .lazy-image {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .lazy-image.loaded {
+            opacity: 1;
+        }
+        
+        /* 图片占位符 */
+        .image-placeholder {
+            background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            animation: placeholder-shimmer 1s linear infinite forwards;
+        }
+        @keyframes placeholder-shimmer {
+            0% { background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+            100% { background-position: 20px 0, 20px 10px, 10px -10px, -10px 0px; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-[#9A482A] shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border-2 border-[#7c3c22]">
+                        <i class="fa fa-dog text-[#9A482A] text-2xl"></i>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl font-bold text-white">PetX</span>
+                        <span class="text-white text-sm">🐾</span>
+                        <span class="text-xl font-medium text-[#F8E9D8]">积分商城</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center gap-2 text-white">
+                        <i class="fa fa-user-circle text-[#F8E9D8] text-xl"></i>
+                        <span>用户</span>
+                        <span class="text-[#F8E9D8] text-sm">🐶</span>
+                    </div>
+                    <a href="user.html" class="py-2 px-5 rounded-full bg-white text-[#9A482A] font-medium hover:bg-[#F8E9D8] hover:shadow-lg transition-all duration-300 flex items-center gap-2">
+                        <i class="fa fa-arrow-left"></i>
+                        返回首页
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 积分信息 -->
+        <div class="mb-8">
+            <div class="relative bg-gradient-to-r from-[#9A482A] to-[#A65233] rounded-2xl p-8 text-white shadow-xl overflow-hidden">
+                <!-- 装饰性背景元素 - 统一棕色狗爪 -->
+                <div class="absolute -top-8 -right-8 opacity-15">
+                    <i class="fa fa-paw text-[#F8E9D8] text-[180px] -rotate-12"></i>
+                </div>
+                <div class="absolute -bottom-6 -left-6 opacity-15">
+                    <i class="fa fa-paw text-[#F8E9D8] text-[140px] rotate-45"></i>
+                </div>
+                <div class="absolute top-1/4 right-1/4 opacity-10">
+                    <i class="fa fa-paw text-[#F8E9D8] text-[70px] rotate-15"></i>
+                </div>
+                <div class="absolute bottom-1/3 left-1/4 opacity-10">
+                    <i class="fa fa-paw text-[#F8E9D8] text-[90px] -rotate-20"></i>
+                </div>
+                
+                <div class="relative z-10 flex flex-col md:flex-row justify-center items-center gap-8">
+                    <div class="text-center">
+                        <div class="flex items-center justify-center gap-3 mb-3">
+                            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                <i class="fa fa-star text-[#FFD700] text-2xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold">我的积分</h2>
+                        </div>
+                        <p class="text-[#F8E9D8] text-lg">积分可以兑换各种宠物用品和服务 </p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-5xl font-bold mb-2">120 <span class="text-2xl">积分</span></div>
+                        <p class="text-[#F8E9D8] text-sm flex items-center justify-center gap-1">
+                            <i class="fa fa-check-circle text-green-400"></i>
+                            可用积分
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 装饰性小爪印 - 统一棕色 -->
+                <div class="absolute top-4 left-1/2 opacity-25">
+                    <i class="fa fa-paw text-[#F8E9D8] text-2xl rotate-12"></i>
+                </div>
+                <div class="absolute bottom-4 right-1/4 opacity-25">
+                    <i class="fa fa-paw text-[#F8E9D8] text-xl -rotate-12"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 商品分类 -->
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-[#9A482A] mb-4 flex items-center gap-2">
+                <i class="fa fa-th-large text-[#E68A48]"></i>
+                商品分类
+            </h3>
+            <div class="flex flex-wrap gap-3">
+                <button class="category-btn px-4 py-2 bg-[#9A482A] text-white rounded-full text-sm" data-category="all">全部商品</button>
+                <button class="category-btn px-4 py-2 bg-white border border-[#9A482A] text-[#9A482A] rounded-full text-sm hover:bg-[#F8E9D8] transition-colors" data-category="food">宠物食品</button>
+                <button class="category-btn px-4 py-2 bg-white border border-[#9A482A] text-[#9A482A] rounded-full text-sm hover:bg-[#F8E9D8] transition-colors" data-category="supplies">宠物用品</button>
+                <button class="category-btn px-4 py-2 bg-white border border-[#9A482A] text-[#9A482A] rounded-full text-sm hover:bg-[#F8E9D8] transition-colors" data-category="service">宠物服务</button>
+                <button class="category-btn px-4 py-2 bg-white border border-[#9A482A] text-[#9A482A] rounded-full text-sm hover:bg-[#F8E9D8] transition-colors" data-category="other">其他</button>
+            </div>
+        </div>
+
+        <!-- 商品列表 -->
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-[#9A482A] mb-4 flex items-center gap-2">
+                <i class="fa fa-shopping-bag text-[#E68A48]"></i>
+                商品列表
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- 商品1 -->
+                <div class="product-item bg-white rounded-lg shadow-card p-4 hover:shadow-card-hover card-transition" data-category="food">
+                    <img src="图片/10.jpg" alt="宠物零食" class="w-full h-40 object-cover rounded-md mb-3">
+                    <h4 class="font-medium text-[#6D4C41] mb-2">宠物零食大礼包 🥓</h4>
+                    <p class="text-[#A65233] font-bold mb-3">50 积分</p>
+                    <button class="w-full py-2 bg-[#9A482A] text-white rounded-md hover:bg-[#7c3c22] transition-colors">
+                        立即兑换 🐾
+                    </button>
+                </div>
+                <!-- 商品2 -->
+                <div class="product-item bg-white rounded-lg shadow-card p-4 hover:shadow-card-hover card-transition" data-category="supplies">
+                    <img src="图片/11.jpg" alt="宠物拾便袋" class="w-full h-40 object-cover rounded-md mb-3">
+                    <h4 class="font-medium text-[#6D4C41] mb-2">环保拾便袋（100片）🧻</h4>
+                    <p class="text-[#A65233] font-bold mb-3">30 积分</p>
+                    <button class="w-full py-2 bg-[#9A482A] text-white rounded-md hover:bg-[#7c3c22] transition-colors">
+                        立即兑换 🐾
+                    </button>
+                </div>
+                <!-- 商品3 -->
+                <div class="product-item bg-white rounded-lg shadow-card p-4 hover:shadow-card-hover card-transition" data-category="food">
+                    <img src="图片/宠物零食1.jpg" alt="宠物零食" class="w-full h-40 object-cover rounded-md mb-3">
+                    <h4 class="font-medium text-[#6D4C41] mb-2">宠物零食组合包 🍖</h4>
+                    <p class="text-[#A65233] font-bold mb-3">45 积分</p>
+                    <button class="w-full py-2 bg-[#9A482A] text-white rounded-md hover:bg-[#7c3c22] transition-colors">
+                        立即兑换 🐾
+                    </button>
+                </div>
+                <!-- 商品4 -->
+                <div class="product-item bg-white rounded-lg shadow-card p-4 hover:shadow-card-hover card-transition" data-category="supplies">
+                    <img src="图片/狗盆.jpg" alt="宠物碗" class="w-full h-40 object-cover rounded-md mb-3">
+                    <h4 class="font-medium text-[#6D4C41] mb-2">宠物碗套装 🥣</h4>
+                    <p class="text-[#A65233] font-bold mb-3">60 积分</p>
+                    <button class="w-full py-2 bg-[#9A482A] text-white rounded-md hover:bg-[#7c3c22] transition-colors">
+                        立即兑换 🐾
+                    </button>
+                </div>
+                <!-- 商品5 -->
+                <div class="product-item bg-white rounded-lg shadow-card p-4 hover:shadow-card-hover card-transition" data-category="supplies">
+                    <img src="图片/玩具.jpg" alt="宠物玩具" class="w-full h-40 object-cover rounded-md mb-3">
+                    <h4 class="font-medium text-[#6D4C41] mb-2">宠物玩具套装 🎾</h4>
+                    <p class="text-[#A65233] font-bold mb-3">40 积分</p>
+                    <button class="w-full py-2 bg-[#9A482A] text-white rounded-md hover:bg-[#7c3c22] transition-colors">
+                        立即兑换 🐾
+                    </button>
+                </div>
+                <!-- 商品6 -->
+                <div class="product-item bg-white rounded-lg shadow-card p-4 hover:shadow-card-hover card-transition" data-category="supplies">
+                    <img src="图片/项圈.jpg" alt="宠物项圈" class="w-full h-40 object-cover rounded-md mb-3">
+                    <h4 class="font-medium text-[#6D4C41] mb-2">宠物项圈 + 牵引绳 🦮</h4>
+                    <p class="text-[#A65233] font-bold mb-3">70 积分</p>
+                    <button class="w-full py-2 bg-[#9A482A] text-white rounded-md hover:bg-[#7c3c22] transition-colors">
+                        立即兑换 🐾
+                    </button>
+                </div>
+                <!-- 商品7 -->
+                <div class="product-item bg-white rounded-lg shadow-card p-4 hover:shadow-card-hover card-transition" data-category="supplies">
+                    <img src="图片/猫砂.jpg" alt="猫砂" class="w-full h-40 object-cover rounded-md mb-3">
+                    <h4 class="font-medium text-[#6D4C41] mb-2">猫砂（10kg）🏠</h4>
+                    <p class="text-[#A65233] font-bold mb-3">55 积分</p>
+                    <button class="w-full py-2 bg-[#9A482A] text-white rounded-md hover:bg-[#7c3c22] transition-colors">
+                        立即兑换 🐾
+                    </button>
+                </div>
+                <!-- 商品8 -->
+                <div class="product-item bg-white rounded-lg shadow-card p-4 hover:shadow-card-hover card-transition" data-category="supplies">
+                    <img src="图片/沐浴露.jpg" alt="宠物沐浴露" class="w-full h-40 object-cover rounded-md mb-3">
+                    <h4 class="font-medium text-[#6D4C41] mb-2">宠物沐浴露 🛁</h4>
+                    <p class="text-[#A65233] font-bold mb-3">35 积分</p>
+                    <button class="w-full py-2 bg-[#9A482A] text-white rounded-md hover:bg-[#7c3c22] transition-colors">
+                        立即兑换 🐾
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 兑换记录 -->
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-[#9A482A] mb-4 flex items-center gap-2">
+                <i class="fa fa-history text-[#E68A48]"></i>
+                兑换记录
+            </h3>
+            <div class="relative bg-white rounded-lg shadow-card p-4 overflow-hidden">
+                <!-- 浅色大狗爪背景装饰 - 仅右下角 -->
+                <div class="absolute bottom-0 right-0 text-[#D4B190]/15 z-0 pointer-events-none">
+                    <i class="fa fa-paw text-[280px] -rotate-15 translate-x-1/4 translate-y-1/4"></i>
+                </div>
+                
+                <div class="relative z-10 overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="py-3 px-4 text-left text-sm font-medium text-[#9A482A]">商品名称</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium text-[#9A482A]">积分</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium text-[#9A482A]">兑换时间</th>
+                                <th class="py-3 px-4 text-left text-sm font-medium text-[#9A482A]">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-3 px-4 text-sm">宠物零食大礼包</td>
+                                <td class="py-3 px-4 text-sm font-bold text-[#A65233]">50 积分</td>
+                                <td class="py-3 px-4 text-sm">2026-04-01 14:30</td>
+                                <td class="py-3 px-4 text-sm"><span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs">已完成</span></td>
+                            </tr>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-3 px-4 text-sm">环保拾便袋</td>
+                                <td class="py-3 px-4 text-sm font-bold text-[#A65233]">30 积分</td>
+                                <td class="py-3 px-4 text-sm">2026-03-15 09:15</td>
+                                <td class="py-3 px-4 text-sm"><span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs">已完成</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部 -->
+    <footer class="bg-[#9A482A] text-white py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="cute-font text-[#F8E9D8]">PetX 文明养宠平台 · 积分商城</p>
+            <p class="text-sm mt-2 text-[#F8E9D8]/80">积分兑换 · 宠物用品 · 优质服务</p>
+        </div>
+    </footer>
+
+    <script>
+        // 全局变量
+        let currentPoints = 120;
+
+        // 页面加载完成后执行
+        window.onload = function() {
+            // 懒加载图片
+            const lazyImages = document.querySelectorAll('.lazy-image');
+            lazyImages.forEach(img => {
+                img.classList.add('loaded');
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                }
+            });
+
+            // 初始化积分
+            updatePointsDisplay();
+
+            // 分类筛选功能
+            const categoryBtns = document.querySelectorAll('.category-btn');
+            const productItems = document.querySelectorAll('.product-item');
+
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 更新按钮样式
+                    categoryBtns.forEach(b => {
+                        b.classList.remove('bg-[#9A482A]', 'text-white');
+                        b.classList.add('bg-white', 'border', 'border-[#9A482A]', 'text-[#9A482A]');
+                    });
+                    this.classList.remove('bg-white', 'border', 'border-[#9A482A]', 'text-[#9A482A]');
+                    this.classList.add('bg-[#9A482A]', 'text-white');
+
+                    // 筛选商品
+                    const category = this.dataset.category;
+                    productItems.forEach(item => {
+                        if (category === 'all' || item.dataset.category === category) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+
+            // 兑换按钮点击事件
+            const exchangeBtns = document.querySelectorAll('button:not(.category-btn)');
+            exchangeBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // 获取商品价格
+                    const priceText = this.parentElement.querySelector('p').textContent;
+                    const price = parseInt(priceText);
+                    
+                    // 检查积分是否足够
+                    if (currentPoints < price) {
+                        showExchangeResult(false, '积分不足');
+                        return;
+                    }
+                    
+                    // 扣除积分
+                    currentPoints -= price;
+                    updatePointsDisplay();
+                    
+                    // 显示兑换成功
+                    showExchangeResult(true, '兑换成功！');
+                });
+            });
+        };
+
+        // 更新积分显示
+        function updatePointsDisplay() {
+            const pointsElement = document.querySelector('.text-4xl.font-bold');
+            if (pointsElement) {
+                pointsElement.innerHTML = currentPoints + ' <span class="text-xl">积分</span>';
+            }
+        }
+
+        // 显示兑换结果
+        function showExchangeResult(success, message) {
+            // 创建结果弹窗
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center">
+                    <div class="text-6xl mb-4 ${success ? 'text-green-500' : 'text-red-500'}">
+                        ${success ? '🎉' : '❌'}
+                    </div>
+                    <h3 class="text-2xl font-bold text-[#9A482A] mb-2">${success ? '兑换成功' : '兑换失败'}</h3>
+                    <p class="text-gray-600 mb-6">${message}</p>
+                    <button class="px-6 py-3 bg-[#9A482A] text-white rounded-full font-medium hover:bg-[#7c3c22] transition-colors w-full" onclick="this.parentElement.parentElement.remove()">
+                        ${success ? '确定' : '返回'}
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+    </script>
+    <script src="page-transition.js"></script>
+</body>
+</html>

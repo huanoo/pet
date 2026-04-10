@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>违规行为总数 - 管理员后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#9A482A', 
+                        secondary: '#F8E9D8',
+                        accent: '#E68A48',
+                        success: '#10B981', 
+                        warning: '#F59E0B', 
+                        danger: '#EF4444',
+                        neutral: { 50: '#F9FAFB', 100: '#F3F4F6', 200: '#E5E7EB', 300: '#D1D5DB' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'ZCOOL KuaiLe', 'Microsoft YaHei', sans-serif; letter-spacing: 0.5px; }
+        .cute-font { font-family: "ZCOOL KuaiLe", "Microsoft YaHei", sans-serif !important; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(154, 72, 42, 0.1); }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+</head>
+<body class="bg-neutral-50 min-h-screen">
+  <!-- 导航栏 -->
+<nav class="bg-[#9A482A] shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-20 items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border-2 border-[#7c3c22]">
+                    <!-- 适配Font Awesome 6.x完整小狗图标，与参考代码一致 -->
+                    <i class="fa-solid fa-dog text-[#9A482A] text-2xl"></i>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-white cute-font">PetX</span>
+                    <span class="text-white text-sm">🐾</span>
+                    <span class="text-xl font-medium text-[#F8E9D8] cute-font">管理后台</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-user-circle text-[#F8E9D8] text-xl"></i>
+                    <span class="cute-font">管理员</span>
+                </div>
+                <!-- 保留原有跳转功能，统一按钮样式+添加小狗爪装饰 -->
+                <button onclick="window.location.href='admin.html'" 
+                        class="py-2 px-5 rounded-full bg-white text-[#9A482A] font-medium cute-font hover:bg-[#F8E9D8] hover:shadow-lg transition-all duration-300 flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>返回首页</span>
+                    <span class="text-xs">🐾</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+    <!-- 主内容区 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+       <!-- 统计卡片：重构为示例风格 - 背景图+全圆角+悬浮动效+棕系配色 -->
+<div class="mb-8 relative z-10">
+    <!-- 标题区域：适配新风格 -->
+    <div class="text-xl font-bold mb-6 flex items-center gap-3 cute-font px-2">
+        <i class="fa fa-exclamation-triangle text-[#E68A48]"></i> 
+        <span class="text-[#9A482A]">总体违规统计</span>
+    </div>
+    
+    <!-- 总数统计模块：保留4个统计项 + 示例风格全圆角+背景图+悬浮动效 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- 累计违规总数 - 红棕系 + 示例风格 -->
+        <div class="card p-6 relative overflow-hidden flex flex-col items-center justify-center text-center 
+                    transition-all duration-300 hover:shadow-xl hover:-translate-y-2 rounded-2xl">
+            <!-- 背景层：背景图 + 半透遮罩 -->
+            <div class="absolute inset-0 bg-cover bg-center opacity-50 rounded-2xl"
+                style="background-image: url('图片/违规3.jpg');"></div>
+            <div class="absolute inset-0 bg-white/40 transition-all duration-300 group-hover:bg-white/30 rounded-2xl"></div>
+            
+            <!-- 内容层：红棕配色 + 悬浮动画 + 圆角图标容器 -->
+            <div class="relative z-10 flex flex-col items-center justify-center w-full transition-all duration-300">
+                <div class="w-12 h-12 rounded-full bg-[#FFE0D0] flex items-center justify-center mb-4 
+                            transition-all duration-300 hover:scale-110 hover:bg-[#FFD0C0]">
+                    <i class="fa fa-ban text-[#EF4444] text-xl transition-all duration-300 hover:text-[#DC2626]"></i>
+                </div>
+                <div class="text-2xl font-bold text-[#9A482A] mb-2 transition-all duration-300 hover:text-[#8A381A] cute-font" id="total-violations">-</div>
+                <div class="text-[#A65233] text-sm transition-all duration-300 hover:text-[#9A482A] cute-font">累计违规总数</div>
+            </div>
+        </div>
+        
+        <!-- 待处理违规数 - 金棕系 + 示例风格 -->
+        <div class="card p-6 relative overflow-hidden flex flex-col items-center justify-center text-center 
+                    transition-all duration-300 hover:shadow-xl hover:-translate-y-2 rounded-2xl">
+            <div class="absolute inset-0 bg-cover bg-center opacity-50 rounded-2xl"
+                style="background-image: url('图片/违规2.jpg');"></div>
+            <div class="absolute inset-0 bg-white/40 transition-all duration-300 group-hover:bg-white/30 rounded-2xl"></div>
+            
+            <div class="relative z-10 flex flex-col items-center justify-center w-full transition-all duration-300">
+                <div class="w-12 h-12 rounded-full bg-[#FFF4D0] flex items-center justify-center mb-4 
+                            transition-all duration-300 hover:scale-110 hover:bg-[#FFEEB0]">
+                    <i class="fa fa-clock text-[#F59E0B] text-xl transition-all duration-300 hover:text-[#D97706]"></i>
+                </div>
+                <div class="text-2xl font-bold text-[#9A482A] mb-2 transition-all duration-300 hover:text-[#8A381A] cute-font" id="pending-violations">-</div>
+                <div class="text-[#A65233] text-sm transition-all duration-300 hover:text-[#9A482A] cute-font">待处理违规数</div>
+            </div>
+        </div>
+        
+        <!-- 已处理违规数 - 绿棕系 + 示例风格 -->
+        <div class="card p-6 relative overflow-hidden flex flex-col items-center justify-center text-center 
+                    transition-all duration-300 hover:shadow-xl hover:-translate-y-2 rounded-2xl">
+            <div class="absolute inset-0 bg-cover bg-center opacity-50 rounded-2xl"
+                style="background-image: url('图片/违规1.png');"></div>
+            <div class="absolute inset-0 bg-white/40 transition-all duration-300 group-hover:bg-white/30 rounded-2xl"></div>
+            
+            <div class="relative z-10 flex flex-col items-center justify-center w-full transition-all duration-300">
+                <div class="w-12 h-12 rounded-full bg-[#E0F5D0] flex items-center justify-center mb-4 
+                            transition-all duration-300 hover:scale-110 hover:bg-[#D0E5C0]">
+                    <i class="fa fa-check-circle text-[#10B981] text-xl transition-all duration-300 hover:text-[#059669]"></i>
+                </div>
+                <div class="text-2xl font-bold text-[#9A482A] mb-2 transition-all duration-300 hover:text-[#8A381A] cute-font" id="resolved-violations">-</div>
+                <div class="text-[#A65233] text-sm transition-all duration-300 hover:text-[#9A482A] cute-font">已处理违规数</div>
+            </div>
+        </div>
+        
+        <!-- 本月新增违规 - 橙棕系 + 示例风格 -->
+        <div class="card p-6 relative overflow-hidden flex flex-col items-center justify-center text-center 
+                    transition-all duration-300 hover:shadow-xl hover:-translate-y-2 rounded-2xl">
+            <div class="absolute inset-0 bg-cover bg-center opacity-50 rounded-2xl"
+                style="background-image: url('图片/违规4.jpg');"></div>
+            <div class="absolute inset-0 bg-white/40 transition-all duration-300 group-hover:bg-white/30 rounded-2xl"></div>
+            
+            <div class="relative z-10 flex flex-col items-center justify-center w-full transition-all duration-300">
+                <div class="w-12 h-12 rounded-full bg-[#FFE8D8] flex items-center justify-center mb-4 
+                            transition-all duration-300 hover:scale-110 hover:bg-[#FFD8C8]">
+                    <i class="fa fa-chart-line text-[#EF4444] text-xl transition-all duration-300 hover:text-[#DC2626]"></i>
+                </div>
+                <div class="text-2xl font-bold text-[#9A482A] mb-2 transition-all duration-300 hover:text-[#8A381A] cute-font" id="month-violations">-</div>
+                <div class="text-[#A65233] text-sm transition-all duration-300 hover:text-[#9A482A] cute-font">本月新增违规</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 补充全局样式：确保hover效果生效 -->
+<style>
+    /* 修复group-hover生效问题 */
+    .card {
+        position: relative;
+    }
+    .card:hover .absolute.bg-white\/40 {
+        background-color: rgba(255, 255, 255, 0.3) !important;
+    }
+</style>
+
+          
+    
+    <!-- 违规类型表格 -->
+<div class="card p-6 relative transition-all duration-300 hover:shadow-lg hover:-translate-y-1 overflow-hidden mb-8"
+     style="background: linear-gradient(135deg, #A65233/10, #A65233/5, #A65233/10); border: 1px solid #A65233/20;">
+    <!-- 背景宠物爪印装饰：右下角浅棕风格 -->
+    <div class="absolute bottom-0 right-0 text-[#D4B190]/20 z-0">
+        <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4"></i>
+        <i class="fa fa-paw text-[240px] -rotate-15 translate-x-1/5 translate-y-1/4 absolute top-0 left-0 text-[#D4B190]/30"></i>
+    </div>
+    
+    <!-- 标题栏：统一焦糖红棕色风格 -->
+    <h3 class="text-xl font-bold text-[#A65233] mb-6 relative z-10 flex items-center justify-start gap-3 cute-font">
+        <i class="fa fa-list text-[#E68A48]"></i>
+        违规类型明细
+    </h3>
+    
+    <!-- 表格容器：美化样式，匹配宠物明细模块风格 -->
+    <div class="overflow-x-auto bg-white/80 rounded-sm p-3 relative z-10 backdrop-blur-sm">
+        <table class="min-w-full divide-y divide-[#A65233]/10">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 text-left text-sm font-bold text-[#A65233] uppercase tracking-wider cute-font">违规类型</th>
+                    <th class="px-6 py-3 text-left text-sm font-bold text-[#A65233] uppercase tracking-wider cute-font">数量</th>
+                    <th class="px-6 py-3 text-left text-sm font-bold text-[#A65233] uppercase tracking-wider cute-font">占比</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white/90 divide-y divide-[#A65233]/10" id="violation-table-body">
+                <!-- 动态加载区域（无示例行，仅保留原动态加载逻辑） -->
+            </tbody>
+        </table>
+    </div>
+</div>
+</main>
+
+    <script>
+        // 检查登录
+        async function checkLogin() {
+            try {
+                const token = localStorage.getItem('petx_token') || '';
+                const res = await fetch('http://localhost:3000/api/checkLogin', { 
+                    headers: { 'x-auth-token': token },
+                    credentials: 'include' 
+                });
+                const json = await res.json();
+                if (json.code !== 200 || json.data.type !== 'admin') {
+                    alert('请先以管理员身份登录');
+                    window.location.href = 'login.html';
+                }
+            } catch (e) {
+                console.error(e);
+                window.location.href = 'login.html';
+            }
+        }
+
+        async function loadData() {
+            try {
+                const token = localStorage.getItem('petx_token') || '';
+                const res = await fetch('http://localhost:3000/api/admin/violationStats', {
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    credentials: 'include'
+                });
+                const json = await res.json();
+                if (json.code === 200) {
+                    const d = json.data;
+                    document.getElementById('total-violations').innerText = d.total;
+                    document.getElementById('pending-violations').innerText = d.pending;
+                    document.getElementById('resolved-violations').innerText = d.resolved;
+                    document.getElementById('month-violations').innerText = d.monthCount;
+
+                    // 渲染表格
+                    const tbody = document.getElementById('violation-table-body');
+                    tbody.innerHTML = d.typeStats.map(item => `
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-800 font-medium cute-font">${item.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 cute-font">${item.count}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 cute-font">${item.ratio}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('加载失败', e);
+            }
+        }
+
+        checkLogin();
+        loadData();
+    </script>
+    <script src="agent-widget.js"></script>
+    <script src="page-transition.js"></script>
+</body>
+</html>
