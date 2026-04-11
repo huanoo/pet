@@ -100,9 +100,11 @@ const fakePetCivilizationScores = [
 
 // ===== 社区文明分数数据 =====
 const fakeCommunityCivilizationScores = [
-  { community_id: 1, month_01: 92.5, month_02: 93.0, month_03: 94.2, month_04: 95.0, month_05: 95.5, month_06: 96.0, month_07: 96.5, month_08: 97.0, month_09: 97.2, month_10: 97.5, month_11: 97.8, month_12: 98.0 },
-  { community_id: 2, month_01: 88.0, month_02: 89.5, month_03: 90.0, month_04: 91.0, month_05: 92.0, month_06: 93.0, month_07: 93.5, month_08: 94.0, month_09: 94.5, month_10: 95.0, month_11: 95.2, month_12: 95.5 },
-  { community_id: 3, month_01: 90.0, month_02: 90.5, month_03: 91.0, month_04: 92.0, month_05: 92.5, month_06: 93.0, month_07: 93.5, month_08: 94.0, month_09: 94.5, month_10: 95.0, month_11: 95.5, month_12: 96.0 },
+  { community_id: 1, month_01: 82.5, month_02: 78.0, month_03: 85.2, month_04: 90.0, month_05: 88.5, month_06: 92.0, month_07: 89.5, month_08: 93.0, month_09: 87.2, month_10: 91.5, month_11: 94.8, month_12: 96.0 },
+  { community_id: 2, month_01: 75.0, month_02: 72.5, month_03: 78.0, month_04: 82.0, month_05: 85.0, month_06: 88.0, month_07: 86.5, month_08: 90.0, month_09: 88.5, month_10: 92.0, month_11: 90.2, month_12: 93.5 },
+  { community_id: 3, month_01: 88.0, month_02: 85.5, month_03: 82.0, month_04: 86.0, month_05: 89.5, month_06: 87.0, month_07: 90.5, month_08: 92.0, month_09: 89.5, month_10: 94.0, month_11: 91.5, month_12: 95.0 },
+  { community_id: 4, month_01: 70.0, month_02: 75.0, month_03: 78.0, month_04: 72.0, month_05: 79.5, month_06: 83.0, month_07: 86.5, month_08: 89.0, month_09: 84.5, month_10: 87.0, month_11: 90.2, month_12: 92.5 },
+  { community_id: 5, month_01: 85.0, month_02: 88.5, month_03: 90.0, month_04: 87.0, month_05: 84.5, month_06: 82.0, month_07: 85.5, month_08: 88.0, month_09: 91.5, month_10: 93.0, month_11: 90.8, month_12: 94.0 },
 ];
 
 // ===== 地图图层数据 =====
