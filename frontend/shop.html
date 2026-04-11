@@ -372,7 +372,7 @@
             // 兑换按钮点击事件
             const exchangeBtns = document.querySelectorAll('button:not(.category-btn)');
             exchangeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', async function() {
                     // 获取商品价格
                     const priceText = this.parentElement.querySelector('p').textContent;
                     const price = parseInt(priceText);
@@ -386,6 +386,9 @@
                     // 扣除积分
                     currentPoints -= price;
                     updatePointsDisplay();
+                    
+                    // 保存积分到localStorage，确保用户页面也能看到更新
+                    localStorage.setItem('petx_user_score', currentPoints.toString());
                     
                     // 显示兑换成功
                     showExchangeResult(true, '兑换成功！');
