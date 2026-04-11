@@ -1201,29 +1201,57 @@
             state.realCenterKey = null;
             clearPoiMarkers();
 
-            // 尝试加载真实后端数据
+            // 尝试从localStorage获取预加载的地图数据
             try {
-                const response = await fetch(`${API_BASE}/map/data`);
-                const data = await response.json();
-                if (data.code === 200) {
-                    renderZones(center, data.zones, true); // 清除旧的，加载后端的
-                    if (data.pois && data.pois.length > 0) {
-                        const backendPois = data.pois.map(p => ({
-                            id: p.id,
-                            name: p.name,
-                            address: p.address,
-                            location: { lng: p.lng, lat: p.lat },
-                            petType: p.category || 'shop',
-                            distance: 0
-                        }));
-                        rebuildPois(backendPois);
+                const preloadedData = localStorage.getItem('petx_map_data');
+                if (preloadedData) {
+                    const data = JSON.parse(preloadedData);
+                    if (data.code === 200) {
+                        renderZones(center, data.zones, true); // 清除旧的，加载后端的
+                        if (data.pois && data.pois.length > 0) {
+                            const backendPois = data.pois.map(p => ({
+                                id: p.id,
+                                name: p.name,
+                                address: p.address,
+                                location: { lng: p.lng, lat: p.lat },
+                                petType: p.category || 'shop',
+                                distance: 0
+                            }));
+                            rebuildPois(backendPois);
+                        }
+                        console.log('使用预加载的地图数据');
+                    } else {
+                        throw new Error('预加载数据格式错误');
                     }
                 } else {
-                    renderZones(center, null, true); // Fallback to mock
+                    throw new Error('没有预加载的地图数据');
                 }
             } catch (err) {
-                console.error('Failed to fetch real map data:', err);
-                renderZones(center, null, true); // Fallback to mock
+                console.log('使用预加载数据失败，尝试从后端加载:', err);
+                // 尝试加载真实后端数据
+                try {
+                    const response = await fetch(`${API_BASE}/map/data`);
+                    const data = await response.json();
+                    if (data.code === 200) {
+                        renderZones(center, data.zones, true); // 清除旧的，加载后端的
+                        if (data.pois && data.pois.length > 0) {
+                            const backendPois = data.pois.map(p => ({
+                                id: p.id,
+                                name: p.name,
+                                address: p.address,
+                                location: { lng: p.lng, lat: p.lat },
+                                petType: p.category || 'shop',
+                                distance: 0
+                            }));
+                            rebuildPois(backendPois);
+                        }
+                    } else {
+                        renderZones(center, null, true); // Fallback to mock
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch real map data:', err);
+                    renderZones(center, null, true); // Fallback to mock
+                }
             }
 
             refreshUI();
@@ -1672,7 +1700,7 @@
             `;
             return;
         }
-        map = new AMap.Map('container', { zoom:15, center:[114.341, 30.510], viewMode:'3D', mapStyle:'amap://styles/whitesmoke' });
+        map = new AMap.Map('container', { zoom:12, center:[114.341, 30.510], viewMode:'3D', mapStyle:'amap://styles/whitesmoke' });
         map.addControl(new AMap.ToolBar({position:'RT'}));
         map.addControl(new AMap.Scale({position:'LB'}));
         initGeolocation();
