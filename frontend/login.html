@@ -821,9 +821,63 @@
             }
         }
 
-        // 页面加载时检查登录态
+        // 7. 预加载地图数据，加快地图页面加载速度
+        async function preloadMapData() {
+            try {
+                // 发送请求获取地图数据
+                const response = await fetch(`${apiBaseUrl}/map/data`);
+                const data = await response.json();
+                
+                // 将地图数据存储到localStorage，供地图页面使用
+                if (data.code === 200) {
+                    localStorage.setItem('petx_map_data', JSON.stringify(data));
+                    console.log('地图数据预加载成功');
+                }
+            } catch (err) {
+                console.log('地图数据预加载失败:', err);
+            }
+        }
+
+        // 8. 预加载社区文明系数数据
+        async function preloadCommunityData() {
+            try {
+                // 发送请求获取社区文明系数数据
+                const response = await fetch(`${apiBaseUrl}/api/community/score`);
+                const data = await response.json();
+                
+                // 将社区文明系数数据存储到localStorage
+                if (data.code === 200) {
+                    localStorage.setItem('petx_community_data', JSON.stringify(data));
+                    console.log('社区文明系数数据预加载成功');
+                }
+            } catch (err) {
+                console.log('社区文明系数数据预加载失败:', err);
+            }
+        }
+
+        // 9. 预加载公告数据
+        async function preloadAnnouncements() {
+            try {
+                // 发送请求获取公告数据
+                const response = await fetch(`${apiBaseUrl}/api/announcements`);
+                const data = await response.json();
+                
+                // 将公告数据存储到localStorage
+                if (data.code === 200) {
+                    localStorage.setItem('petx_announcements', JSON.stringify(data));
+                    console.log('公告数据预加载成功');
+                }
+            } catch (err) {
+                console.log('公告数据预加载失败:', err);
+            }
+        }
+
+        // 页面加载时执行所有预加载操作
         window.onload = function() {
             checkLoginState();
+            preloadMapData();
+            preloadCommunityData();
+            preloadAnnouncements();
         };
     </script>
     <script src="agent-widget.js"></script>
