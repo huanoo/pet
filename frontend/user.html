@@ -965,6 +965,8 @@
                     userCurrentScore = parseInt(storedScore);
                     document.getElementById('user-score').textContent = userCurrentScore;
                     // Update header badge
+                    const headerScore = document.getElementById('header-score');
+                    if(headerScore) headerScore.textContent = userCurrentScore;
                     return;
                 }
                 
