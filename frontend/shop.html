@@ -399,15 +399,6 @@
         // 加载用户积分
         async function loadUserScore() {
             try {
-                // 先尝试从localStorage读取积分，确保兑换后能立即看到更新
-                const storedScore = localStorage.getItem('petx_user_score');
-                if (storedScore) {
-                    currentPoints = parseInt(storedScore);
-                    updatePointsDisplay();
-                    return;
-                }
-                
-                // 如果localStorage没有，再从API加载
                 const token = localStorage.getItem('petx_token') || '';
                 const res = await fetch('https://pet-production-28ba.up.railway.app/api/user/score', {
                     headers: { 'x-auth-token': token },
@@ -417,7 +408,6 @@
                 if (json.code === 200) {
                     // API返回结构是 { data: { base, bonus, total, deductions: {...} } }
                     currentPoints = json.data.total;
-                    updatePointsDisplay();
                 }
             } catch (err) {
                 console.error("加载积分失败", err);
