@@ -439,8 +439,8 @@
             } catch (e) {
                 console.error("Failed to load dashboard data, using mock data");
                 // 添加假数据
-                document.getElementById('pet-count').textContent = "24";
-                document.getElementById('violation-count').textContent = "8";
+                document.getElementById('pet-count').textContent = "15";
+                document.getElementById('violation-count').textContent = "5";
                 document.getElementById('civilScore').textContent = "85";
             }
         }
@@ -1088,39 +1088,6 @@
                     deduction_score: 15,
                     violation_desc: "在电梯内未清理宠物粪便",
                     violation_time: new Date(Date.now() - 432000000).toISOString(),
-                    handle_status: "completed",
-                    handle_result: "已教育并扣分"
-                },
-                {
-                    id: 6,
-                    pet_name: "花花",
-                    owner_tel: "13800138005",
-                    type_name: "宠物噪音扰民",
-                    deduction_score: 10,
-                    violation_desc: "宠物白天吠叫，影响居民休息",
-                    violation_time: new Date(Date.now() - 518400000).toISOString(),
-                    handle_status: "processing",
-                    handle_result: "正在处理中"
-                },
-                {
-                    id: 7,
-                    pet_name: "黄黄",
-                    owner_tel: "13800138006",
-                    type_name: "未牵绳遛狗",
-                    deduction_score: 20,
-                    violation_desc: "在小区内遛狗未牵绳，吓到了老人",
-                    violation_time: new Date(Date.now() - 604800000).toISOString(),
-                    handle_status: "pending",
-                    handle_result: ""
-                },
-                {
-                    id: 8,
-                    pet_name: "灰灰",
-                    owner_tel: "13800138007",
-                    type_name: "未清理宠物粪便",
-                    deduction_score: 15,
-                    violation_desc: "在楼道内未清理宠物粪便",
-                    violation_time: new Date(Date.now() - 691200000).toISOString(),
                     handle_status: "completed",
                     handle_result: "已教育并扣分"
                 }
