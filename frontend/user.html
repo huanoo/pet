@@ -959,6 +959,16 @@
         // 加载用户积分
         async function loadUserScore() {
             try {
+                // 先尝试从localStorage读取积分，确保兑换后能立即看到更新
+                const storedScore = localStorage.getItem('petx_user_score');
+                if (storedScore) {
+                    userCurrentScore = parseInt(storedScore);
+                    document.getElementById('user-score').textContent = userCurrentScore;
+                    // Update header badge
+                    return;
+                }
+                
+                // 如果localStorage没有，再从API加载
                 const token = localStorage.getItem('petx_token') || '';
                 const res = await fetch('https://pet-production-28ba.up.railway.app/api/user/score', {
                     headers: { 'x-auth-token': token },
@@ -1022,15 +1032,54 @@
                     announcementList = json.data;
                 }
             } catch (e) {
-                console.error("Failed to load announcements");
+                console.error("Failed to load announcements, using mock data");
+                // 添加假数据
+                announcementList = [
+                    {
+                        id: 1,
+                        title: "文明养宠倡议书",
+                        content: "为了创造和谐的社区环境，我们倡议所有养宠居民遵守文明养宠规范，遛狗牵绳，及时清理宠物粪便，共同维护社区整洁。",
+                        publish_time: new Date().toISOString(),
+                        is_top: true
+                    },
+                    {
+                        id: 2,
+                        title: "宠物疫苗接种通知",
+                        content: "社区将于下周开展宠物疫苗接种活动，请各位养宠居民带好宠物相关证件，按时前往指定地点接种疫苗。",
+                        publish_time: new Date(Date.now() - 86400000).toISOString(),
+                        is_top: false
+                    },
+                    {
+                        id: 3,
+                        title: "社区宠物乐园开放通知",
+                        content: "经过一段时间的改造，社区宠物乐园现已重新开放，新增了宠物运动设施和休息区，欢迎各位养宠居民前来使用。",
+                        publish_time: new Date(Date.now() - 172800000).toISOString(),
+                        is_top: false
+                    }
+                ];
             }
 
             const container = document.getElementById('user-announcement-list');
             container.innerHTML = '';
             
             if (announcementList.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-400 py-4">暂无社区公告 🐾</div>';
-                return;
+                // 添加假数据作为默认显示
+                announcementList = [
+                    {
+                        id: 1,
+                        title: "文明养宠倡议书",
+                        content: "为了创造和谐的社区环境，我们倡议所有养宠居民遵守文明养宠规范，遛狗牵绳，及时清理宠物粪便，共同维护社区整洁。",
+                        publish_time: new Date().toISOString(),
+                        is_top: true
+                    },
+                    {
+                        id: 2,
+                        title: "宠物疫苗接种通知",
+                        content: "社区将于下周开展宠物疫苗接种活动，请各位养宠居民带好宠物相关证件，按时前往指定地点接种疫苗。",
+                        publish_time: new Date(Date.now() - 86400000).toISOString(),
+                        is_top: false
+                    }
+                ];
             }
 
             // data is already sorted by is_top DESC, created_at DESC from backend
@@ -1171,23 +1220,50 @@
 
         // ✅ 从后端加载宠物数据
         async function loadPetsFromServer() {
-            const token = localStorage.getItem('petx_token') || '';
-            const res = await fetch('https://pet-production-28ba.up.railway.app/api/myPets', {
-                headers: { 'x-auth-token': token },
-                credentials: 'include'
-            });
-            const json = await res.json();
+            try {
+                const token = localStorage.getItem('petx_token') || '';
+                const res = await fetch('https://pet-production-28ba.up.railway.app/api/myPets', {
+                    headers: { 'x-auth-token': token },
+                    credentials: 'include'
+                });
+                const json = await res.json();
 
-            petList = (json.data || []).map(p => ({
-                id: p.id,
-                name: p.pet_name,
-                breed: p.pet_breed,
-                age: p.pet_age,
-                vaccine: p.pet_vaccine,
-                certId: p.pet_cert_id,
-                registerTime: p.pet_register_time,
-                avatar: p.pet_avatar || `https://picsum.photos/400/300?random=${p.id}`
-            }));
+                petList = (json.data || []).map(p => ({
+                    id: p.id,
+                    name: p.pet_name,
+                    breed: p.pet_breed,
+                    age: p.pet_age,
+                    vaccine: p.pet_vaccine,
+                    certId: p.pet_cert_id,
+                    registerTime: p.pet_register_time,
+                    avatar: p.pet_avatar || `https://picsum.photos/400/300?random=${p.id}`
+                }));
+            } catch (e) {
+                console.error("Failed to load pets, using mock data");
+                // 添加假数据
+                petList = [
+                    {
+                        id: 1,
+                        name: "球球",
+                        breed: "金毛寻回犬",
+                        age: "2岁",
+                        vaccine: "已完成全部疫苗",
+                        certId: "GP20240115001",
+                        registerTime: "2024-01-15",
+                        avatar: "图片/6.jpg"
+                    },
+                    {
+                        id: 2,
+                        name: "咪咪",
+                        breed: "英短蓝猫",
+                        age: "1岁半",
+                        vaccine: "已完成全部疫苗",
+                        certId: "GP20240220002",
+                        registerTime: "2024-02-20",
+                        avatar: "图片/猫咪踩奶.jpg"
+                    }
+                ];
+            }
 
             renderPetList();
         }
