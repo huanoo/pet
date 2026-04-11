@@ -420,11 +420,19 @@
 
         // 仪表盘
         async function loadDashboard() {
-            const data = await fetchData(`${API_BASE}/admin/dashboard`);
-            if (data.code === 200) {
-                document.getElementById('pet-count').textContent = data.data.petCount;
-                document.getElementById('violation-count').textContent = data.data.violationCount;
-                document.getElementById('civilScore').textContent = data.data.civilScore;
+            try {
+                const data = await fetchData(`${API_BASE}/admin/dashboard`);
+                if (data.code === 200) {
+                    document.getElementById('pet-count').textContent = data.data.petCount;
+                    document.getElementById('violation-count').textContent = data.data.violationCount;
+                    document.getElementById('civilScore').textContent = data.data.civilScore;
+                }
+            } catch (e) {
+                console.error("Failed to load dashboard data, using mock data");
+                // 添加假数据
+                document.getElementById('pet-count').textContent = "24";
+                document.getElementById('violation-count').textContent = "8";
+                document.getElementById('civilScore').textContent = "85";
             }
         }
 
@@ -445,7 +453,7 @@
                 if (!map) {
                     map = new AMap.Map('heatmap-container', {
                         center: wutSouthLakeCampus, // 武汉理工大学南湖校区坐标
-                        zoom: 17, // 进一步增加缩放级别，更精确显示校园
+                        zoom: 14, // 缩小缩放级别，以看到所有社区热力情况
                         zooms: [10, 18],
                         mapStyle: 'amap://styles/light'
                     });
@@ -453,7 +461,7 @@
                 
                 // 确保地图中心始终对齐武汉理工大学南湖校区
                 map.setCenter(wutSouthLakeCampus);
-                map.setZoom(17);
+                map.setZoom(14);
                 
                 // 生成热力图数据
                 const heatmapData = generateHeatmapData();
@@ -697,17 +705,95 @@
 
         // 趋势图
         async function loadTrendChart() {
-            const res = await fetchData(`${API_BASE}/admin/civilizationTrend`);
-            if (res.code !== 200) return;
+            try {
+                const res = await fetchData(`${API_BASE}/admin/civilizationTrend`);
+                if (res.code === 200) {
+                    renderTrendChart(res.data);
+                } else {
+                    // 使用假数据
+                    const mockData = generateMockTrendData();
+                    renderTrendChart(mockData);
+                }
+            } catch (e) {
+                console.error("Failed to load trend chart data, using mock data");
+                // 使用假数据
+                const mockData = generateMockTrendData();
+                renderTrendChart(mockData);
+            }
+        }
+        
+        function generateMockTrendData() {
+            // 生成过去12个月的月份标签
+            const months = [];
+            const scores = [];
+            
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                months.push(`${date.getMonth() + 1}月`);
+                
+                // 生成70-100之间的随机分数，有一定的变化起伏
+                let baseScore = 85;
+                if (i === 0) {
+                    // 当前月份
+                    baseScore = 88;
+                } else if (i === 1) {
+                    // 上个月
+                    baseScore = 86;
+                } else if (i === 2) {
+                    // 上上个月
+                    baseScore = 83;
+                } else if (i === 3) {
+                    // 三个月前
+                    baseScore = 80;
+                } else if (i === 4) {
+                    // 四个月前
+                    baseScore = 78;
+                } else if (i === 5) {
+                    // 五个月前
+                    baseScore = 75;
+                } else if (i === 6) {
+                    // 半年前
+                    baseScore = 72;
+                } else if (i === 7) {
+                    // 七个月前
+                    baseScore = 74;
+                } else if (i === 8) {
+                    // 八个月前
+                    baseScore = 77;
+                } else if (i === 9) {
+                    // 九个月前
+                    baseScore = 80;
+                } else if (i === 10) {
+                    // 十个月前
+                    baseScore = 82;
+                } else if (i === 11) {
+                    // 十一个月前
+                    baseScore = 84;
+                }
+                
+                // 添加一些随机波动
+                const randomVariation = (Math.random() - 0.5) * 4;
+                const finalScore = Math.max(70, Math.min(100, Math.round(baseScore + randomVariation)));
+                scores.push(finalScore);
+            }
+            
+            return months.map((month, index) => ({
+                month,
+                score: scores[index]
+            }));
+        }
+        
+        function renderTrendChart(data) {
             const ctx = document.getElementById('civilization-chart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: res.data.map(item => item.month),
+                    labels: data.map(item => item.month),
                     datasets: [{
                         label: '文明系数',
-                        data: res.data.map(item => item.score),
+                        data: data.map(item => item.score),
                         borderColor: '#A65233',
                         backgroundColor: 'rgba(166, 82, 51, 0.1)',
                         tension: 0.4,
@@ -769,27 +855,78 @@
         async function loadAnnouncements() {
             const tbody = document.getElementById('announcement-body');
             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8"><div class="spinner mx-auto"></div></td></tr>';
-            const res = await fetchData(`${API_BASE}/announcements`);
-            tbody.innerHTML = '';
-            if (res.code === 200 && res.data.length) {
-                allAnnouncements = res.data;
-                res.data.forEach(ann => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="px-6 py-4 text-gray-800 font-medium cute-font">${ann.title}</td>
-                        <td class="px-6 py-4 text-gray-600 text-sm cute-font">${new Date(ann.publish_time).toLocaleString()}</td>
-                        <td class="px-6 py-4">${ann.is_top == 1 ? '<span class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs cute-font">置顶</span>' : '<span class="text-gray-400 text-sm cute-font">普通</span>'}</td>
-                        <td class="px-6 py-4">
-                            <button onclick="editAnnouncement(${ann.id})" class="text-[#E68A48] hover:text-[#d97706] mr-4 font-medium">编辑</button>
-                            <button onclick="deleteAnnouncement(${ann.id})" class="text-gray-400 hover:text-red-500 font-medium">删除</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-400 cute-font">暂无公告 ~</td></tr>';
+            
+            try {
+                const res = await fetchData(`${API_BASE}/announcements`);
+                tbody.innerHTML = '';
+                if (res.code === 200 && res.data.length) {
+                    allAnnouncements = res.data;
+                    res.data.forEach(ann => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-gray-50 transition-colors";
+                        tr.innerHTML = `
+                            <td class="px-6 py-4 text-gray-800 font-medium cute-font">${ann.title}</td>
+                            <td class="px-6 py-4 text-gray-600 text-sm cute-font">${new Date(ann.publish_time).toLocaleString()}</td>
+                            <td class="px-6 py-4">${ann.is_top == 1 ? '<span class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs cute-font">置顶</span>' : '<span class="text-gray-400 text-sm cute-font">普通</span>'}</td>
+                            <td class="px-6 py-4">
+                                <button onclick="editAnnouncement(${ann.id})" class="text-[#E68A48] hover:text-[#d97706] mr-4 font-medium">编辑</button>
+                                <button onclick="deleteAnnouncement(${ann.id})" class="text-gray-400 hover:text-red-500 font-medium">删除</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    // 添加假数据，与用户端一致
+                    addMockAnnouncements(tbody);
+                }
+            } catch (e) {
+                console.error("Failed to load announcements, using mock data");
+                // 添加假数据，与用户端一致
+                addMockAnnouncements(tbody);
             }
+        }
+        
+        function addMockAnnouncements(tbody) {
+            tbody.innerHTML = '';
+            const mockAnnouncements = [
+                {
+                    id: 1,
+                    title: "文明养宠倡议书",
+                    content: "为了创造和谐的社区环境，我们倡议所有养宠居民遵守文明养宠规范，遛狗牵绳，及时清理宠物粪便，共同维护社区整洁。",
+                    publish_time: new Date().toISOString(),
+                    is_top: true
+                },
+                {
+                    id: 2,
+                    title: "宠物疫苗接种通知",
+                    content: "社区将于下周开展宠物疫苗接种活动，请各位养宠居民带好宠物相关证件，按时前往指定地点接种疫苗。",
+                    publish_time: new Date(Date.now() - 86400000).toISOString(),
+                    is_top: false
+                },
+                {
+                    id: 3,
+                    title: "社区宠物乐园开放通知",
+                    content: "经过一段时间的改造，社区宠物乐园现已重新开放，新增了宠物运动设施和休息区，欢迎各位养宠居民前来使用。",
+                    publish_time: new Date(Date.now() - 172800000).toISOString(),
+                    is_top: false
+                }
+            ];
+            
+            allAnnouncements = mockAnnouncements;
+            mockAnnouncements.forEach(ann => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-gray-800 font-medium cute-font">${ann.title}</td>
+                    <td class="px-6 py-4 text-gray-600 text-sm cute-font">${new Date(ann.publish_time).toLocaleString()}</td>
+                    <td class="px-6 py-4">${ann.is_top ? '<span class="px-2 py-1 bg-red-100 text-red-600 rounded text-xs cute-font">置顶</span>' : '<span class="text-gray-400 text-sm cute-font">普通</span>'}</td>
+                    <td class="px-6 py-4">
+                        <button onclick="editAnnouncement(${ann.id})" class="text-[#E68A48] hover:text-[#d97706] mr-4 font-medium">编辑</button>
+                        <button onclick="deleteAnnouncement(${ann.id})" class="text-gray-400 hover:text-red-500 font-medium">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         function editAnnouncement(id) {
@@ -822,62 +959,156 @@
         async function loadViolations(filter = 'all') {
             const tbody = document.getElementById('violation-body');
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12"><div class="spinner mx-auto"></div></td></tr>';
-            const res = await fetchData(`${API_BASE}/admin/violations?filter=${filter}`);
-            tbody.innerHTML = '';
-            if (res.code === 200 && res.data.length) {
-                allViolations = res.data;
-                res.data.forEach(v => {
-                    const statusClass = {
-                        pending: 'status-pending',
-                        processing: 'status-processing',
-                        completed: 'status-completed',
-                        rejected: 'status-rejected'
-                    }[v.handle_status] || '';
-                    const statusText = {
-                        pending: '待处理',
-                        processing: '处理中',
-                        completed: '已完成',
-                        rejected: '已驳回'
-                    }[v.handle_status] || v.handle_status;
-                    
-                    // 根据违规类型设置不同的监控照片
-                    let imgPath;
-                    if (v.type_name.includes('未牵绳遛狗')) {
-                        // 使用专门的遛狗未牵绳照片
-                        imgPath = `图片/遛狗未牵绳.jpg`;
-                    } else {
-                        // 其他违规类型使用随机照片
-                        const imgIndex = (v.id % 4) + 1;
-                        imgPath = `图片/违规${imgIndex}.jpg`;
-                    }
-                    
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-gray-50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="px-4 py-3 font-medium text-gray-800 cute-font">${v.pet_name || '-'}</td>
-                        <td class="px-4 py-3 text-gray-600 cute-font">${v.owner_tel || '-'}</td>
-                        <td class="px-4 py-3 text-gray-600 cute-font">${v.type_name}</td>
-                        <td class="px-4 py-3 font-bold text-red-500 cute-font">-${v.deduction_score}</td>
-                        <td class="px-4 py-3 max-w-xs truncate text-gray-500 text-sm cute-font" title="${v.violation_desc}">${v.violation_desc || '-'}</td>
-                        <td class="px-4 py-3 text-gray-500 text-sm cute-font">${new Date(v.violation_time).toLocaleString()}</td>
-                        <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass} cute-font">${statusText}</span></td>
-                        <td class="px-4 py-3 flex items-center space-x-3">
-                            <button onclick="viewViolationImage('${imgPath}')" class="text-[#E68A48] hover:text-[#d97706]" title="查看违规监控照片">
-                                <i class="fa fa-camera text-lg"></i>
-                            </button>
-                            <button onclick="editViolation(${v.id})" class="text-[#E68A48] hover:text-[#d97706]" title="编辑">
-                                <i class="fa fa-edit"></i>
-                            </button>
-                            <button onclick="deleteViolation(${v.id})" class="text-gray-400 hover:text-red-500" title="删除">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-12 text-gray-400 cute-font">暂无违规记录 ~</td></tr>';
+            
+            try {
+                const res = await fetchData(`${API_BASE}/admin/violations?filter=${filter}`);
+                tbody.innerHTML = '';
+                if (res.code === 200 && res.data.length) {
+                    allViolations = res.data;
+                    res.data.forEach(v => {
+                        const statusClass = {
+                            pending: 'status-pending',
+                            processing: 'status-processing',
+                            completed: 'status-completed',
+                            rejected: 'status-rejected'
+                        }[v.handle_status] || '';
+                        const statusText = {
+                            pending: '待处理',
+                            processing: '处理中',
+                            completed: '已完成',
+                            rejected: '已驳回'
+                        }[v.handle_status] || v.handle_status;
+                        
+                        // 根据违规类型设置不同的监控照片
+                        let imgPath;
+                        if (v.type_name.includes('未牵绳遛狗')) {
+                            // 使用专门的遛狗未牵绳照片
+                            imgPath = `图片/遛狗未牵绳.jpg`;
+                        } else {
+                            // 其他违规类型使用随机照片
+                            const imgIndex = (v.id % 4) + 1;
+                            imgPath = `图片/违规${imgIndex}.jpg`;
+                        }
+                        
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-gray-50 transition-colors";
+                        tr.innerHTML = `
+                            <td class="px-4 py-3 font-medium text-gray-800 cute-font">${v.pet_name || '-'}</td>
+                            <td class="px-4 py-3 text-gray-600 cute-font">${v.owner_tel || '-'}</td>
+                            <td class="px-4 py-3 text-gray-600 cute-font">${v.type_name}</td>
+                            <td class="px-4 py-3 font-bold text-red-500 cute-font">-${v.deduction_score}</td>
+                            <td class="px-4 py-3 max-w-xs truncate text-gray-500 text-sm cute-font" title="${v.violation_desc}">${v.violation_desc || '-'}</td>
+                            <td class="px-4 py-3 text-gray-500 text-sm cute-font">${new Date(v.violation_time).toLocaleString()}</td>
+                            <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass} cute-font">${statusText}</span></td>
+                            <td class="px-4 py-3 flex items-center space-x-3">
+                                <button onclick="viewViolationImage('${imgPath}')" class="text-[#E68A48] hover:text-[#d97706]" title="查看违规监控照片">
+                                    <i class="fa fa-camera text-lg"></i>
+                                </button>
+                                <button onclick="editViolation(${v.id})" class="text-[#E68A48] hover:text-[#d97706]" title="编辑">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                <button onclick="deleteViolation(${v.id})" class="text-gray-400 hover:text-red-500" title="删除">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    // 添加假数据
+                    addMockViolations(tbody);
+                }
+            } catch (e) {
+                console.error("Failed to load violations, using mock data");
+                addMockViolations(tbody);
             }
+        }
+        
+        function addMockViolations(tbody) {
+            tbody.innerHTML = '';
+            const mockViolations = [
+                {
+                    id: 1,
+                    pet_name: "球球",
+                    owner_tel: "13800138000",
+                    type_name: "未牵绳遛狗",
+                    deduction_score: 20,
+                    violation_desc: "在小区内遛狗未牵绳，吓到了路过的小朋友",
+                    violation_time: new Date(Date.now() - 86400000).toISOString(),
+                    handle_status: "completed",
+                    handle_result: "已教育并扣分"
+                },
+                {
+                    id: 2,
+                    pet_name: "咪咪",
+                    owner_tel: "13800138001",
+                    type_name: "未清理宠物粪便",
+                    deduction_score: 15,
+                    violation_desc: "在公共区域未清理宠物粪便",
+                    violation_time: new Date(Date.now() - 172800000).toISOString(),
+                    handle_status: "processing",
+                    handle_result: "正在处理中"
+                },
+                {
+                    id: 3,
+                    pet_name: "旺财",
+                    owner_tel: "13800138002",
+                    type_name: "宠物噪音扰民",
+                    deduction_score: 10,
+                    violation_desc: "宠物夜间吠叫，影响邻居休息",
+                    violation_time: new Date(Date.now() - 259200000).toISOString(),
+                    handle_status: "pending",
+                    handle_result: ""
+                }
+            ];
+            
+            mockViolations.forEach(v => {
+                const statusClass = {
+                    pending: 'status-pending',
+                    processing: 'status-processing',
+                    completed: 'status-completed',
+                    rejected: 'status-rejected'
+                }[v.handle_status] || '';
+                const statusText = {
+                    pending: '待处理',
+                    processing: '处理中',
+                    completed: '已完成',
+                    rejected: '已驳回'
+                }[v.handle_status] || v.handle_status;
+                
+                // 根据违规类型设置不同的监控照片
+                let imgPath;
+                if (v.type_name.includes('未牵绳遛狗')) {
+                    imgPath = `图片/遛狗未牵绳.jpg`;
+                } else {
+                    const imgIndex = (v.id % 4) + 1;
+                    imgPath = `图片/违规${imgIndex}.jpg`;
+                }
+                
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-medium text-gray-800 cute-font">${v.pet_name || '-'}</td>
+                    <td class="px-4 py-3 text-gray-600 cute-font">${v.owner_tel || '-'}</td>
+                    <td class="px-4 py-3 text-gray-600 cute-font">${v.type_name}</td>
+                    <td class="px-4 py-3 font-bold text-red-500 cute-font">-${v.deduction_score}</td>
+                    <td class="px-4 py-3 max-w-xs truncate text-gray-500 text-sm cute-font" title="${v.violation_desc}">${v.violation_desc || '-'}</td>
+                    <td class="px-4 py-3 text-gray-500 text-sm cute-font">${new Date(v.violation_time).toLocaleString()}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass} cute-font">${statusText}</span></td>
+                    <td class="px-4 py-3 flex items-center space-x-3">
+                        <button onclick="viewViolationImage('${imgPath}')" class="text-[#E68A48] hover:text-[#d97706]" title="查看违规监控照片">
+                            <i class="fa fa-camera text-lg"></i>
+                        </button>
+                        <button onclick="editViolation(${v.id})" class="text-[#E68A48] hover:text-[#d97706]" title="编辑">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button onclick="deleteViolation(${v.id})" class="text-gray-400 hover:text-red-500" title="删除">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         function editViolation(id) {
