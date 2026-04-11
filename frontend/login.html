@@ -295,10 +295,13 @@
                         </select>
                     </div>
                 </div>
-                <!-- 登录 + 注册 按钮组：替换为PetX暖棕红主色调 -->
+                <!-- 登录 + 快速登录 + 注册 按钮组：替换为PetX暖棕红主色调 -->
                 <div class="flex space-x-3">
                     <button id="login-btn" class="flex-1 py-3 bg-[#c2410c] text-white rounded-lg font-semibold text-lg hover:bg-[#9a3412] active:bg-[#7c2d12] transition-all shadow-sm hover:shadow-md relative overflow-hidden cute-font">
                         登录 🐾
+                    </button>
+                    <button id="quick-login-btn" class="flex-1 py-3 bg-[#059669] text-white rounded-lg font-semibold text-lg hover:bg-[#047857] active:bg-[#065f46] transition-all shadow-sm hover:shadow-md relative overflow-hidden cute-font">
+                        快速登录 🚀
                     </button>
                     <button id="register-btn" class="flex-1 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-300 cute-font">
                         注册 🐶
@@ -736,6 +739,61 @@
                 // 恢复按钮状态
                 this.disabled = false;
                 this.textContent = "登录 🐾";
+            }
+        });
+
+        // 5. 快速登录功能 - 用于大赛演示
+        document.getElementById('quick-login-btn').addEventListener('click', async function() {
+            // 获取用户类型
+            const userType = document.querySelector('input[name="user-type"]:checked').value;
+
+            // 禁用按钮，防止重复提交
+            this.disabled = true;
+            this.textContent = "登录中... 🚀";
+
+            try {
+                // 发送快速登录POST请求
+                const response = await fetch(`${apiBaseUrl}/api/quick-login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include', // 携带cookie，保持登录态
+                    body: JSON.stringify({ 
+                        type: userType
+                    })
+                });
+
+                // 解析后端返回结果
+                const result = await response.json();
+                if (result.code === 200) {
+                    // 保存 Token
+                    if (result.data && result.data.token) {
+                        localStorage.setItem('petx_token', result.data.token);
+                        localStorage.setItem('petx_user', JSON.stringify(result.data));
+                    }
+
+                    // 登录成功：提示+根据用户类型跳转对应页面
+                    showToast(result.msg);
+                    setTimeout(() => {
+                        if (userType === 'admin') {
+                            window.location.href = 'admin.html';
+                        } else {
+                            window.location.href = 'user.html';
+                        }
+                    }, 1000);
+                } else {
+                    // 登录失败：显示后端错误提示
+                    showToast(result.msg, false);
+                }
+            } catch (err) {
+                // 网络异常/服务器未启动
+                showToast("网络异常，请检查后端服务是否运行", false);
+                console.error('快速登录请求失败：', err);
+            } finally {
+                // 恢复按钮状态
+                this.disabled = false;
+                this.textContent = "快速登录 🚀";
             }
         });
 
