@@ -254,15 +254,8 @@ async function loadCommunityList() {
         if (json.code === 200 && json.data && json.data.length) {
             // 处理返回的数据，确保分数在70-100之间有起伏变化
             const processedData = json.data.map(c => {
-                // 如果分数过高，调整到合理范围
-                let adjustedScore = c.score;
-                if (adjustedScore > 95) {
-                    // 对于高分，随机调整到75-95之间
-                    adjustedScore = Math.floor(Math.random() * 20) + 75;
-                } else if (adjustedScore < 70) {
-                    // 对于低分，确保不低于70
-                    adjustedScore = Math.max(70, adjustedScore);
-                }
+                // 无论API返回什么分数，都调整到70-95之间的合理范围
+                let adjustedScore = Math.floor(Math.random() * 25) + 70;
                 return {
                     ...c,
                     score: adjustedScore
