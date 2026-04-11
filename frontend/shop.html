@@ -327,7 +327,7 @@
         let currentPoints = 120;
 
         // 页面加载完成后执行
-        window.onload = function() {
+        window.onload = async function() {
             // 懒加载图片
             const lazyImages = document.querySelectorAll('.lazy-image');
             lazyImages.forEach(img => {
@@ -336,6 +336,9 @@
                     img.src = img.dataset.src;
                 }
             });
+
+            // 加载用户积分
+            await loadUserScore();
 
             // 初始化积分
             updatePointsDisplay();
@@ -389,6 +392,24 @@
                 });
             });
         };
+
+        // 加载用户积分
+        async function loadUserScore() {
+            try {
+                const token = localStorage.getItem('petx_token') || '';
+                const res = await fetch('https://pet-production-28ba.up.railway.app/api/user/score', {
+                    headers: { 'x-auth-token': token },
+                    credentials: 'include'
+                });
+                const json = await res.json();
+                if (json.code === 200) {
+                    // API返回结构是 { data: { base, bonus, total, deductions: {...} } }
+                    currentPoints = json.data.total;
+                }
+            } catch (err) {
+                console.error("加载积分失败", err);
+            }
+        }
 
         // 更新积分显示
         function updatePointsDisplay() {
