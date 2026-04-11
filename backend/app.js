@@ -552,6 +552,50 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+// 快速登录 - 用于大赛演示
+app.post('/api/quick-login', async (req, res) => {
+  try {
+    const { type = 'user' } = req.body;
+    
+    // 根据类型获取对应的假用户
+    let user;
+    if (type === 'admin') {
+      user = fakeData.getUsers().find(u => u.user_type === 'admin');
+    } else {
+      user = fakeData.getUsers().find(u => u.user_type === 'user');
+    }
+    
+    if (!user) {
+      return res.json({ code: -1, msg: '用户不存在' });
+    }
+    
+    const loginState = {
+      tel: user.tel,
+      name: user.user_name || user.name,
+      type: user.user_type,
+      id: user.id,
+      communityId: user.community_id
+    };
+    
+    res.cookie('loginState', JSON.stringify(loginState), { 
+      httpOnly: true, 
+      maxAge: 24 * 3600000, 
+      sameSite: 'lax'
+    });
+    
+    const token = Buffer.from(JSON.stringify(loginState)).toString('base64');
+
+    res.json({ 
+      code: 200, 
+      msg: '快速登录成功',
+      data: { communityId: user.community_id, token, userType: user.user_type, name: user.user_name || user.name }
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({ code: 500, msg: '服务器错误' });
+  }
+});
+
 // 登录
 app.post('/api/login', async (req, res) => {
   try {
@@ -566,7 +610,7 @@ app.post('/api/login', async (req, res) => {
       
       const loginState = {
         tel: user.tel,
-        name: user.user_name,
+        name: user.user_name || user.name,
         type: user.user_type,
         id: user.id,
         communityId: user.community_id
@@ -583,7 +627,7 @@ app.post('/api/login', async (req, res) => {
       return res.json({ 
         code: 200, 
         msg: '登录成功（假数据模式）',
-        data: { communityId: user.community_id, token, userType: user.user_type, name: user.name }
+        data: { communityId: user.community_id, token, userType: user.user_type, name: user.user_name || user.name }
       });
     }
     
@@ -615,7 +659,7 @@ app.post('/api/login', async (req, res) => {
     res.json({ 
       code: 200, 
       msg: '登录成功',
-      data: { communityId: user.community_id, token, userType: user.user_type, name: user.user_name }
+      data: { communityId: user.community_id, token, userType: user.user_type, name: user.name }
     });
   } catch (err) {
     console.error(err);
