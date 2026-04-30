@@ -162,7 +162,7 @@
         .border-2 {
             border-width: 2px;
         }
-        .border-\[\#E68A48\] {
+        .border-\\[\\#E68A48\\] {
             border-color: #E68A48;
         }
         .text-lg {
@@ -183,7 +183,7 @@
         .text-gray-400 {
             color: #9ca3af;
         }
-        .hover\:text-\[\#c2410c\]:hover {
+        .hover\\:text-\\[\\#c2410c\\]:hover {
             color: #c2410c;
         }
         .cursor-pointer {
@@ -207,7 +207,7 @@
         .p-4 {
             padding: 1rem;
         }
-        .h-\[50vh\] {
+        .h-\\[50vh\\] {
             height: 50vh;
         }
         .space-y-3 {
@@ -346,55 +346,96 @@
         setAgentBusyState(false);
     }
 
-    // 发送消息逻辑
-    async function sendToAgent() {
-        if (agentBusy) return;
-        const text = agentInput.value.trim();
-        if (!text) return;
+    // 本地模拟回复功能
+    function getLocalResponse(text) {
+        const lowerText = text.toLowerCase();
         
-        agentInput.value = '';
-        appendAgentMessage('user', text);
-        setAgentBusyState(true);
-
-        try {
-            // 尝试从 cookie 或 localStorage 获取 token，或者直接让后端处理
-            // 注意：这里假设 fetch 会自动带上 cookie (credentials: 'include')
-            const resp = await fetch('http://127.0.0.1:3000/api/agent/chat', { // 使用绝对路径，兼容 Live Server (5500端口) 和后端 (3000端口)
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    query: text,
-                    conversation_id: agentConversationId || undefined,
-                    inputs: { 
-                        target_name: agentTargetName || undefined, 
-                        page: document.title || 'unknown' 
-                    }
-                })
-            });
-            
-            const result = await resp.json();
-            if (result.code !== 200) {
-                showMsg(result.msg || '智能体调用失败 🐾', false);
-                appendAgentMessage('assistant', result.msg ? `(系统提示：${result.msg})` : '我这边暂时无法回复，请稍后再试。');
-                setAgentBusyState(false);
-                return;
-            }
-            
-            const data = result.data || {};
-            if (data.conversation_id) agentConversationId = data.conversation_id;
-            const answer = (data.answer || data.message || '').toString().trim() || '我没有生成到有效回复。';
-            
-            appendAgentMessage('assistant', answer);
-        } catch (err) {
-            console.error(err);
-            showMsg('网络异常，请检查连接 🐶', false);
-            appendAgentMessage('assistant', '网络开小差了，请稍后再试。');
-        } finally {
-            setAgentBusyState(false);
-            agentInput.focus();
+        // 常见问题匹配
+        if (lowerText.includes('你好') || lowerText.includes('hello') || lowerText.includes('嗨')) {
+            return '你好！我是小P助手，很高兴为你服务。这是一个社区养宠地图应用，你可以使用它来寻找附近的宠物医院、宠物店，还可以标注遛宠区域哦！';
         }
+        
+        if (lowerText.includes('如何') || lowerText.includes('怎么') || lowerText.includes('怎样')) {
+            if (lowerText.includes('标注') || lowerText.includes('画') || lowerText.includes('区域')) {
+                return '要标注遛宠区域很简单：点击左下角的铅笔图标打开标注工具栏，选择区域类型（建议遛宠区/限制遛宠区/禁止遛宠区），然后在地图上点击添加顶点，双击完成绘制即可！';
+            }
+            if (lowerText.includes('找') || lowerText.includes('搜索')) {
+                return '在地图顶部的搜索框中输入关键词（比如"宠物医院"、"宠物店"），系统会自动搜索附近的相关地点并显示在地图上。';
+            }
+        }
+        
+        if (lowerText.includes('缓存') || lowerText.includes('保存') || lowerText.includes('加载')) {
+            return '缓存功能说明：\n1. 手动标注的区域会自动保存\n2. 点击"加载缓存底图"可以加载之前保存的区域\n3. 点击"清除缓存底图"可以删除所有保存的区域';
+        }
+        
+        if (lowerText.includes('地图') || lowerText.includes('显示') || lowerText.includes('图层')) {
+            return '地图功能介绍：\n- 左侧面板可以切换不同图层的显示\n- 右侧工具栏提供卫星地图、距离测量、实时路况等功能\n- 缩放地图时，图标会自动调整大小和显示';
+        }
+        
+        // 默认回复
+        const defaultResponses = [
+            '你好！我是小P助手，这是一个社区养宠地图应用。有什么问题可以问我哦！',
+            '我是你的智能助手小P。我可以帮你了解如何使用这个养宠地图应用！',
+            '你可以尝试问我：如何标注遛宠区域？如何搜索宠物医院？',
+            '如果后端服务启动，我会提供更智能的回答。现在让我先帮你了解这个应用吧！',
+            '感谢你的咨询！这是一个社区养宠友好地图，你可以用它来规划遛宠路线。'
+        ];
+        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
     }
+
+    // 发送消息逻辑
+  async function sendToAgent() {
+    if (agentBusy) return;
+    const text = agentInput.value.trim();
+    if (!text) return;
+    
+    agentInput.value = '';
+    appendAgentMessage('user', text);
+    setAgentBusyState(true);
+
+    try {
+      // 尝试从 cookie 或 localStorage 获取 token，或者直接让后端处理
+      // 注意：这里假设 fetch 会自动带上 cookie (credentials: 'include')
+      const resp = await fetch('http://127.0.0.1:3000/api/agent/chat', { // 使用绝对路径，兼容 Live Server (5500端口) 和后端 (3000端口)
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: text,
+          conversation_id: agentConversationId || undefined,
+          inputs: { 
+            target_name: agentTargetName || undefined, 
+            page: document.title || 'unknown' 
+          }
+        })
+      });
+      
+      const result = await resp.json();
+      if (result.code !== 200) {
+        showMsg(result.msg || '智能体调用失败', false);
+        appendAgentMessage('assistant', result.msg ? `(系统提示：${result.msg})` : '我这边暂时无法回复，请稍后再试。');
+        setAgentBusyState(false);
+        return;
+      }
+      
+      const data = result.data || {};
+      if (data.conversation_id) agentConversationId = data.conversation_id;
+      const answer = (data.answer || data.message || '').toString().trim() || '我没有生成到有效回复。';
+      
+      appendAgentMessage('assistant', answer);
+    } catch (err) {
+      console.error(err);
+      // 显示更友好的错误信息
+      showMsg('后端服务未启动，使用本地模拟', false);
+      
+      // 本地模拟回复
+      const localResponse = getLocalResponse(text);
+      appendAgentMessage('assistant', localResponse);
+    } finally {
+      setAgentBusyState(false);
+      agentInput.focus();
+    }
+  }
 
     // 事件绑定
     closeAgentModalBtn.addEventListener('click', closeAgentModal);
@@ -414,5 +455,5 @@
         window.openAgentModal();
     });
 
-    console.log('🐾 智能体助手组件已加载');
+    console.log('智能体助手组件已加载');
 })();
