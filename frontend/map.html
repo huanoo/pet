@@ -2346,14 +2346,20 @@
     // 清除缓存底图
     function clearCacheBaseMap() {
         try {
+            // 清除所有相关存储数据
             localStorage.removeItem('petx_cache_basemap');
             sessionStorage.removeItem('petx_cache_basemap');
+            localStorage.removeItem('petx_user_zones');
+            sessionStorage.removeItem('petx_user_zones');
             
-            // 移除地图上的缓存底图元素
-            Object.entries(state.polygons).forEach(([type, polys]) => {
-                state.polygons[type] = polys.filter(p => {
+            // 清除 Cookie
+            document.cookie = 'petx_user_zones=; path=/; max-age=0';
+            
+            // 移除地图上所有区域（包括用户标注的和系统加载的）
+            Object.keys(state.polygons).forEach(type => {
+                state.polygons[type] = state.polygons[type].filter(p => {
                     const extData = p.getExtData();
-                    if (extData && extData.isCacheLayer && !extData.isUserMarked) {
+                    if (extData && (extData.isCacheLayer || extData.isUserMarked)) {
                         p.setMap(null);
                         return false;
                     }
@@ -2361,16 +2367,13 @@
                 });
             });
             
-            state.zoneLabels = state.zoneLabels.filter(label => {
-                const extData = label.getExtData();
-                if (extData && extData.isCacheLayer && !extData.isUserMarked) {
-                    label.setMap(null);
-                    return false;
-                }
-                return true;
+            // 移除地图上所有标签
+            state.zoneLabels.forEach(label => {
+                label.setMap(null);
             });
+            state.zoneLabels = [];
             
-            showAlert('已清除缓存底图', 'success');
+            showAlert('已清除所有缓存数据', 'success');
             setTimeout(hideAlert, 3000);
         } catch (e) {
             console.error('清除缓存底图失败:', e);
