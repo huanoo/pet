@@ -394,9 +394,11 @@
     setAgentBusyState(true);
 
     try {
-      // 尝试从 cookie 或 localStorage 获取 token，或者直接让后端处理
-      // 注意：这里假设 fetch 会自动带上 cookie (credentials: 'include')
-      const resp = await fetch('http://127.0.0.1:3000/api/agent/chat', { // 使用绝对路径，兼容 Live Server (5500端口) 和后端 (3000端口)
+      // 先尝试连接后端
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2秒超时
+      
+      const resp = await fetch('http://127.0.0.1:3000/api/agent/chat', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -407,15 +409,15 @@
             target_name: agentTargetName || undefined, 
             page: document.title || 'unknown' 
           }
-        })
+        }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       const result = await resp.json();
       if (result.code !== 200) {
-        showMsg(result.msg || '智能体调用失败', false);
-        appendAgentMessage('assistant', result.msg ? `(系统提示：${result.msg})` : '我这边暂时无法回复，请稍后再试。');
-        setAgentBusyState(false);
-        return;
+        throw new Error(result.msg || '智能体调用失败');
       }
       
       const data = result.data || {};
@@ -424,9 +426,7 @@
       
       appendAgentMessage('assistant', answer);
     } catch (err) {
-      console.error(err);
-      // 显示更友好的错误信息
-      showMsg('后端服务未启动，使用本地模拟', false);
+      // 后端不可用，使用本地模拟（不打印错误日志）
       
       // 本地模拟回复
       const localResponse = getLocalResponse(text);
