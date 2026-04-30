@@ -539,7 +539,7 @@
     </div>
 </div>
 
-<div id="alert-bar">⚠️ 警告：您已进入宠物禁止区，请立即离开！</div>
+<div id="alert-bar">警告：您已进入宠物禁止区，请立即离开！</div>
 
 <div class="search-box">
     <i class="fa fa-search text-gray-400"></i>
@@ -552,7 +552,9 @@
     <button class="tool-btn" id="tool-measure" onclick="toggleRuler()" title="距离测量"><i class="fa fa-arrows-h"></i></button>
     <button class="tool-btn" id="tool-traffic" onclick="toggleTraffic()" title="实时路况"><i class="fa fa-car"></i></button>
     <button class="tool-btn" id="tool-heatmap" onclick="toggleHeatmap()" title="宠物活跃度"><i class="fa fa-fire"></i></button>
-    <button class="tool-btn" onclick="clearTools()" title="清除标记"><i class="fa fa-eraser"></i></button>
+    <button class="tool-btn" id="tool-loadcache" onclick="loadCacheBaseMap()" title="加载缓存底图"><i class="fa fa-folder-open"></i></button>
+    <button class="tool-btn" id="tool-clearcache" onclick="clearCacheBaseMap()" title="清除缓存底图"><i class="fa fa-trash"></i></button>
+    <button class="tool-btn" id="tool-clear" onclick="clearTools()" title="清除标记"><i class="fa fa-eraser"></i></button>
 </div>
 
 <div id="btn-nearby-toggle" onclick="toggleNearbyPanel()" title="发现周边">
@@ -888,25 +890,32 @@
             });
 
             // 添加区域悬浮标签
-            const centerPos = AMap.GeometryUtil.getRingCenter(z.path);
-            const labelMarker = new AMap.Marker({
-                position: centerPos,
-                content: `<div class="zone-label-marker">
-                            <div class="zone-label-dot" style="background:${z.color}"></div>
-                            ${z.name}
-                          </div>`,
-                offset: new AMap.Pixel(-20, -10),
-                zIndex: 50,
-                map: state.layers[z.type] ? map : null,
-                bubble: true,
-                extData: z // 存入区域元数据
-            });
-            state.zoneLabels.push(labelMarker);
+            const centerPos = calculatePolygonCenter(z.path);
+            
+            // 添加安全检查：确保坐标有效
+            if (!centerPos || isNaN(centerPos.lng) || isNaN(centerPos.lat)) {
+                console.warn('⚠️ renderZones: 无效的中心点坐标', centerPos);
+            } else {
+                const labelMarker = new AMap.Marker({
+                    position: centerPos,
+                    content: `<div class="zone-label-marker">
+                                <div class="zone-label-dot" style="background:${z.color}"></div>
+                                ${z.name}
+                              </div>`,
+                    offset: new AMap.Pixel(-20, -10),
+                    zIndex: 50,
+                    map: state.layers[z.type] ? map : null,
+                    bubble: true,
+                    extData: z // 存入区域元数据
+                });
+                state.zoneLabels.push(labelMarker);
+            }
 
             poly.on('mouseover', () => {
                 poly.setOptions({ fillOpacity: 0.5, strokeWeight: 5 });
-                if (z.type === 'ban') showAlert(`🚨 严禁入内：${z.name}`);
-                else if (z.type === 'warning') showAlert(`⚠️ 限制区域：${z.name}`);
+                if (z.type === 'ban') showAlert(`严禁入内：${z.name}`);
+                else if (z.type === 'warning') showAlert(`限制区域：${z.name}`, 'warning');
+                else showAlert(`${z.name}`, 'success');
             });
             poly.on('mouseout', () => {
                 poly.setOptions({ fillOpacity: 0.2, strokeWeight: 3 });
@@ -921,9 +930,18 @@
         if (zoneText) zoneText.textContent = realZones ? '实时安全区域已更新' : '遛宠环境分析完成';
     }
 
-    function showAlert(msg) {
+    function showAlert(msg, type = 'danger') {
         const bar = document.getElementById('alert-bar');
         bar.textContent = msg;
+        
+        const colors = {
+            danger: 'linear-gradient(90deg, var(--danger) 0%, #DC2626 100%)',
+            warning: 'linear-gradient(90deg, #F59E0B 0%, #D97706 100%)',
+            success: 'linear-gradient(90deg, #10B981 0%, #059669 100%)',
+            info: 'linear-gradient(90deg, #3B82F6 0%, #2563EB 100%)'
+        };
+        
+        bar.style.background = colors[type] || colors.danger;
         bar.style.top = '0';
     }
     function hideAlert() {
@@ -1015,6 +1033,12 @@
         if (!map) return;
         const zoom = map.getZoom();
         
+        // 添加安全检查：如果 zoom 是 undefined 或 NaN，直接返回
+        if (zoom === undefined || zoom === null || isNaN(zoom)) {
+            console.warn('⚠️ updateMarkerScale: zoom 值无效', zoom);
+            return;
+        }
+        
         // 定义显示范围：缩放级别 12-17 之间显示图标
         const minZoom = 12;
         const maxZoom = 17;
@@ -1033,6 +1057,12 @@
             // 在显示范围内，图标大小随缩放级别变化
             // 15级为基准，缩放范围 0.6 - 1.5
             scale = Math.min(1.5, Math.max(0.6, Math.pow(1.12, zoom - 15)));
+        }
+        
+        // 添加安全检查：确保 scale 不是 NaN
+        if (isNaN(scale)) {
+            console.warn('⚠️ updateMarkerScale: scale 值无效', scale);
+            scale = 1;
         }
         
         const markers = [];
@@ -1162,7 +1192,7 @@
                 if (status !== 'complete' || result?.info !== 'OK') {
                     if (result === 'INVALID_USER_SCODE' || (result?.info && result.info.includes('SCODE'))) {
                         console.error('高德地图 SCODE 验证失败，请检查 Key 和 安全密钥配置。');
-                        showAlert('⚠️ 地图服务验证失败，请检查 Key/安全密钥是否匹配');
+                        showAlert('地图服务验证失败，请检查 Key/安全密钥是否匹配');
                     }
                     resolve([]);
                     return;
@@ -1288,16 +1318,16 @@
             animateValue('pfi-value', parseInt(pfiValue.textContent.replace('指数：', '') || 0), score, 1000, '指数：');
             
             if (score >= 85) {
-                pfiDesc.textContent = '养宠天堂：环境极佳 🌟';
+                pfiDesc.textContent = '养宠天堂：环境极佳';
                 pfiDesc.style.color = '#10B981';
             } else if (score >= 70) {
-                pfiDesc.textContent = '非常友好：设施齐全 🐾';
+                pfiDesc.textContent = '非常友好：设施齐全';
                 pfiDesc.style.color = '#3B82F6';
             } else if (score >= 50) {
-                pfiDesc.textContent = '一般社区：注意禁区 🚶';
+                pfiDesc.textContent = '一般社区：注意禁区';
                 pfiDesc.style.color = '#F59E0B';
             } else {
-                pfiDesc.textContent = '环境堪忧：不建议停留 ⚠️';
+                pfiDesc.textContent = '环境堪忧：不建议停留';
                 pfiDesc.style.color = '#EF4444';
             }
         }
@@ -1661,6 +1691,11 @@
             } else {
                 initMapData(state.currentPos, { force: true, keepUserZones: true });
             }
+            
+            // 自动加载缓存底图
+            setTimeout(() => {
+                loadCacheBaseMap();
+            }, 800);
         });
     }
 
@@ -1752,7 +1787,7 @@
             panel.classList.add('active');
             btn.classList.add('active');
             document.getElementById('draw-hint').textContent = '请先选择标注类型';
-            showAlert('🎨 请先选择标注类型，然后点击地图绘制区域');
+            showAlert('请先选择标注类型，然后点击地图绘制区域', 'info');
         }
     }
 
@@ -1792,14 +1827,14 @@
         map.on('dblclick', onDrawDoubleClick);
         
         document.getElementById('draw-hint').textContent = `正在绘制 ${drawTypeNames[drawState.type]}：点击添加顶点，双击完成`;
-        showAlert(`🎨 开始绘制${drawTypeNames[drawState.type]}：点击添加顶点，双击完成`);
+        showAlert(`开始绘制${drawTypeNames[drawState.type]}：点击添加顶点，双击完成`, 'info');
     }
 
     function onDrawClick(e) {
         // 必须已选择类型才能绘制
         if (!drawState.active || !drawState.type) {
             if (!drawState.type) {
-                showAlert('⚠️ 请先选择标注类型');
+                showAlert('请先选择标注类型');
             }
             return;
         }
@@ -1825,13 +1860,13 @@
         // 必须已选择类型且有足够顶点
         if (!drawState.active || !drawState.type) {
             if (!drawState.type) {
-                showAlert('⚠️ 请先选择标注类型');
+                showAlert('请先选择标注类型');
             }
             return;
         }
         
         if (drawState.points.length < 3) {
-            showAlert('⚠️ 需要至少3个顶点才能形成区域');
+            showAlert('需要至少3个顶点才能形成区域');
             return;
         }
         
@@ -1862,7 +1897,7 @@
 
     function confirmDrawing() {
         if (drawState.points.length < 3) {
-            showAlert('⚠️ 需要至少3个顶点才能形成区域');
+            showAlert('需要至少3个顶点才能形成区域');
             return;
         }
         
@@ -1890,7 +1925,8 @@
         });
         
         // 添加区域标签
-        const centerPos = AMap.GeometryUtil.getRingCenter(zone.path);
+        // 使用自定义函数计算多边形中心点，因为 AMap.GeometryUtil.getRingCenter 可能不存在
+        const centerPos = calculatePolygonCenter(zone.path);
         const labelMarker = new AMap.Marker({
             position: centerPos,
             content: `<div class="zone-label-marker">
@@ -1908,9 +1944,9 @@
         // 添加事件监听
         poly.on('mouseover', () => {
             poly.setOptions({ fillOpacity: 0.5, strokeWeight: 5 });
-            if (zone.type === 'ban') showAlert(`🚨 严禁入内：${zone.name}`);
-            else if (zone.type === 'warning') showAlert(`⚠️ 限制区域：${zone.name}`);
-            else showAlert(`✅ ${zone.name}`);
+            if (zone.type === 'ban') showAlert(`严禁入内：${zone.name}`);
+            else if (zone.type === 'warning') showAlert(`限制区域：${zone.name}`, 'warning');
+            else showAlert(`${zone.name}`, 'success');
         });
         poly.on('mouseout', () => {
             poly.setOptions({ fillOpacity: 0.2, strokeWeight: 3 });
@@ -1921,13 +1957,16 @@
         state.polygons[zone.type].push(poly);
         state.seenZonePolygons.push(poly);
         
-        // 保存到localStorage以便持久化
+        // 保存到localStorage以便持久化（用户标注）
         saveUserMarkedZones();
+        
+        // 自动保存到缓存底图，无需手动点击
+        saveCacheBaseMap();
         
         // 清理绘制状态
         cancelDrawing();
         
-        showAlert(`✅ ${zone.name} 已添加！`);
+        showAlert(`${zone.name} 已添加并自动保存！`, 'success');
         setTimeout(hideAlert, 3000);
     }
 
@@ -1980,18 +2019,85 @@
             });
         });
         
+        // 尝试多个存储方案
+        let saved = false;
+        
+        // 方案1: localStorage
         try {
             localStorage.setItem('petx_user_zones', JSON.stringify(userZones));
+            console.log('✅ 使用 localStorage 保存成功:', userZones.length, '个区域');
+            saved = true;
         } catch (e) {
-            console.warn('无法保存用户标注:', e);
+            console.warn('⚠️ localStorage 不可用:', e.message);
+        }
+        
+        // 方案2: sessionStorage（备选）
+        if (!saved) {
+            try {
+                sessionStorage.setItem('petx_user_zones', JSON.stringify(userZones));
+                console.log('✅ 使用 sessionStorage 保存成功:', userZones.length, '个区域');
+                saved = true;
+            } catch (e) {
+                console.warn('⚠️ sessionStorage 不可用:', e.message);
+            }
+        }
+        
+        // 方案3: Cookie（最后备选）
+        if (!saved) {
+            try {
+                const cookieValue = encodeURIComponent(JSON.stringify(userZones));
+                document.cookie = `petx_user_zones=${cookieValue}; path=/; max-age=31536000`;
+                console.log('✅ 使用 Cookie 保存成功:', userZones.length, '个区域');
+                saved = true;
+            } catch (e) {
+                console.error('❌ 所有存储方案都不可用:', e);
+                showAlert('浏览器阻止了本地存储，标注无法持久保存');
+            }
         }
     }
 
     function loadUserMarkedZones() {
         try {
-            const data = localStorage.getItem('petx_user_zones');
+            // 尝试从多个存储方案加载数据
+            let data = null;
+            
+            // 方案1: localStorage
+            try {
+                data = localStorage.getItem('petx_user_zones');
+                if (data) console.log('🔍 从 localStorage 加载用户标注');
+            } catch (e) {
+                console.warn('⚠️ localStorage 不可用');
+            }
+            
+            // 方案2: sessionStorage
+            if (!data) {
+                try {
+                    data = sessionStorage.getItem('petx_user_zones');
+                    if (data) console.log('🔍 从 sessionStorage 加载用户标注');
+                } catch (e) {
+                    console.warn('⚠️ sessionStorage 不可用');
+                }
+            }
+            
+            // 方案3: Cookie
+            if (!data) {
+                const cookies = document.cookie.split(';');
+                for (const cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'petx_user_zones') {
+                        data = decodeURIComponent(value);
+                        console.log('🔍 从 Cookie 加载用户标注');
+                        break;
+                    }
+                }
+            }
+            
+            console.log('📊 加载用户标注结果:', data ? `找到数据` : '未找到数据');
+            
             if (data) {
                 const zones = JSON.parse(data);
+                console.log('📥 加载到的区域数据:', zones);
+                
                 if (zones.length > 0) {
                     // 为每个加载的区域添加 isUserMarked 属性，确保后续保存时能正确识别
                     const markedZones = zones.map(z => ({
@@ -2026,27 +2132,33 @@
                         });
                         
                         // 添加区域悬浮标签
-                        const centerPos = AMap.GeometryUtil.getRingCenter(z.path);
-                        const labelMarker = new AMap.Marker({
-                            position: centerPos,
-                            content: `<div class="zone-label-marker">
-                                        <div class="zone-label-dot" style="background:${z.color}"></div>
-                                        ${z.name}
-                                      </div>`,
-                            offset: new AMap.Pixel(-20, -10),
-                            zIndex: 50,
-                            map: state.layers[z.type] !== false ? map : null,
-                            bubble: true,
-                            extData: z
-                        });
-                        state.zoneLabels.push(labelMarker);
+                        const centerPos = calculatePolygonCenter(z.path);
+                        
+                        // 添加安全检查：确保坐标有效
+                        if (centerPos && !isNaN(centerPos.lng) && !isNaN(centerPos.lat)) {
+                            const labelMarker = new AMap.Marker({
+                                position: centerPos,
+                                content: `<div class="zone-label-marker">
+                                            <div class="zone-label-dot" style="background:${z.color}"></div>
+                                            ${z.name}
+                                          </div>`,
+                                offset: new AMap.Pixel(-20, -10),
+                                zIndex: 50,
+                                map: state.layers[z.type] !== false ? map : null,
+                                bubble: true,
+                                extData: z
+                            });
+                            state.zoneLabels.push(labelMarker);
+                        } else {
+                            console.warn('⚠️ loadUserMarkedZones: 无效的中心点坐标', centerPos);
+                        }
                         
                         // 添加事件监听
                         poly.on('mouseover', () => {
                             poly.setOptions({ fillOpacity: 0.5, strokeWeight: 5 });
-                            if (z.type === 'ban') showAlert(`🚨 严禁入内：${z.name}`);
-                            else if (z.type === 'warning') showAlert(`⚠️ 限制区域：${z.name}`);
-                            else showAlert(`✅ ${z.name}`);
+                            if (z.type === 'ban') showAlert(`严禁入内：${z.name}`);
+                            else if (z.type === 'warning') showAlert(`限制区域：${z.name}`, 'warning');
+                            else showAlert(`${z.name}`, 'success');
                         });
                         poly.on('mouseout', () => {
                             poly.setOptions({ fillOpacity: 0.2, strokeWeight: 3 });
@@ -2059,7 +2171,7 @@
                         state.seenZonePolygons.push(poly);
                     });
                     
-                    showAlert(`📥 已加载 ${zones.length} 个用户标注区域`);
+                    showAlert(`已加载 ${zones.length} 个用户标注区域`, 'info');
                     setTimeout(hideAlert, 3000);
                 }
             }
@@ -2068,7 +2180,266 @@
         }
     }
 
+    // ===================== 缓存底图图层功能 =====================
+    
+    // 保存当前视图为缓存底图（自动调用，无需手动点击）
+    function saveCacheBaseMap() {
+        console.log('=== 开始保存缓存底图 ===');
+        const cacheLayers = [];
+        
+        console.log('当前polygons状态:', state.polygons);
+        
+        // 收集所有区域（包括用户标注和系统区域）
+        Object.entries(state.polygons).forEach(([type, polys]) => {
+            console.log('处理类型:', type, ', 数量:', polys.length);
+            polys.forEach(poly => {
+                try {
+                    const extData = poly.getExtData();
+                    if (extData) {
+                        const pathData = poly.getPath().map(p => {
+                            return [p.getLng(), p.getLat()];
+                        });
+                        cacheLayers.push({
+                            type: extData.type || type,
+                            color: extData.color,
+                            name: extData.name,
+                            path: pathData,
+                            isUserMarked: extData.isUserMarked || false,
+                            isCacheLayer: true
+                        });
+                    }
+                } catch (e) {
+                    console.error('处理多边形数据失败:', e);
+                }
+            });
+        });
+        
+        console.log('收集到的区域数据:', cacheLayers);
+        
+        // 保存到localStorage
+        try {
+            const dataStr = JSON.stringify(cacheLayers);
+            localStorage.setItem('petx_cache_basemap', dataStr);
+            sessionStorage.setItem('petx_cache_basemap', dataStr);
+            showAlert(`已保存 ${cacheLayers.length} 个区域到缓存底图`, 'success');
+            setTimeout(hideAlert, 3000);
+            console.log('缓存底图已保存:', cacheLayers.length, '个区域');
+            console.log('保存的数据:', dataStr.substring(0, 200) + '...');
+        } catch (e) {
+            console.error('保存缓存底图失败:', e);
+            showAlert('保存缓存底图失败');
+        }
+    }
+
+    // 加载缓存底图
+    function loadCacheBaseMap() {
+        console.log('=== 开始加载缓存底图 ===');
+        let data = null;
+        
+        // 尝试从多个存储方案加载
+        try {
+            data = localStorage.getItem('petx_cache_basemap');
+            if (!data) {
+                console.log('localStorage中未找到，尝试sessionStorage');
+                data = sessionStorage.getItem('petx_cache_basemap');
+            }
+        } catch (e) {
+            console.warn('加载缓存底图失败:', e);
+            return;
+        }
+        
+        if (!data) {
+            console.log('❌ 未找到缓存底图');
+            return;
+        }
+        
+        console.log('✅ 找到缓存数据，开始解析');
+        try {
+            const cacheLayers = JSON.parse(data);
+            console.log('解析到的数据:', cacheLayers);
+            
+            if (!cacheLayers || cacheLayers.length === 0) {
+                console.log('⚠️ 缓存底图为空');
+                return;
+            }
+            
+            console.log('📥 加载缓存底图:', cacheLayers.length, '个区域');
+            
+            // 渲染缓存底图（不清除现有内容）
+            let loadedCount = 0;
+            cacheLayers.forEach((z, index) => {
+                try {
+                    console.log(`处理第 ${index + 1} 个区域:`, z.name);
+                    
+                    // 转换路径为 AMap.LngLat 对象数组
+                    const lngLatPath = z.path.map(p => new AMap.LngLat(p[0], p[1]));
+                    
+                    // 创建多边形
+                    const poly = new AMap.Polygon({
+                        path: lngLatPath,
+                        fillColor: z.color,
+                        strokeColor: z.color,
+                        fillOpacity: z.isUserMarked ? 0.35 : 0.28,
+                        strokeOpacity: 0.8,
+                        strokeWeight: 4,
+                        strokeDasharray: z.type === 'warning' ? [10, 5] : null,
+                        map: map, // 直接添加到地图
+                        extData: { ...z, isCacheLayer: true },
+                        bubble: true
+                    });
+                    
+                    console.log('多边形已加载:', z.name);
+                    
+                    // 暂时不创建标签，避免Pixel(NaN, NaN)错误
+                    /*
+                    // 添加标签
+                    const centerPos = calculatePolygonCenter(lngLatPath);
+                    if (centerPos) {
+                        const labelMarker = new AMap.Marker({
+                            position: centerPos,
+                            content: `<div class="zone-label-marker cache-label" style="transform:scale(1.1);">
+                                        <div class="zone-label-dot" style="background:${z.color};width:12px;height:12px;"></div>
+                                        ${z.name}
+                                      </div>`,
+                            offset: new AMap.Pixel(-20, -10),
+                            zIndex: 45,
+                            map: map,
+                            bubble: true,
+                            extData: { ...z, isCacheLayer: true }
+                        });
+                        state.zoneLabels.push(labelMarker);
+                    }
+                    */
+                    
+                    // 添加到状态
+                    if (!state.polygons[z.type]) state.polygons[z.type] = [];
+                    state.polygons[z.type].push(poly);
+                    
+                    // 添加鼠标交互
+                    poly.on('mouseover', () => {
+                        poly.setOptions({ fillOpacity: 0.5, strokeWeight: 6 });
+                        if (z.type === 'ban') showAlert(`禁止区：${z.name}`);
+                        else if (z.type === 'warning') showAlert(`限制区：${z.name}`, 'warning');
+                        else if (z.type === 'safe') showAlert(`推荐区：${z.name}`, 'success');
+                    });
+                    poly.on('mouseout', () => {
+                        poly.setOptions({ fillOpacity: z.isUserMarked ? 0.35 : 0.28, strokeWeight: 4 });
+                        hideAlert();
+                    });
+                    
+                    loadedCount++;
+                } catch (e) {
+                    console.error(`渲染区域 ${index + 1} 失败:`, e);
+                }
+            });
+            
+            showAlert(`已成功加载 ${loadedCount} 个缓存底图区域`, 'success');
+            setTimeout(hideAlert, 4000);
+            console.log('加载完成，已加载', loadedCount, '个区域');
+            
+        } catch (e) {
+            console.error('解析缓存底图失败:', e);
+            showAlert('加载缓存底图失败，请查看控制台');
+        }
+    }
+
+    // 清除缓存底图
+    function clearCacheBaseMap() {
+        try {
+            localStorage.removeItem('petx_cache_basemap');
+            sessionStorage.removeItem('petx_cache_basemap');
+            
+            // 移除地图上的缓存底图元素
+            Object.entries(state.polygons).forEach(([type, polys]) => {
+                state.polygons[type] = polys.filter(p => {
+                    const extData = p.getExtData();
+                    if (extData && extData.isCacheLayer && !extData.isUserMarked) {
+                        p.setMap(null);
+                        return false;
+                    }
+                    return true;
+                });
+            });
+            
+            state.zoneLabels = state.zoneLabels.filter(label => {
+                const extData = label.getExtData();
+                if (extData && extData.isCacheLayer && !extData.isUserMarked) {
+                    label.setMap(null);
+                    return false;
+                }
+                return true;
+            });
+            
+            showAlert('已清除缓存底图', 'success');
+            setTimeout(hideAlert, 3000);
+        } catch (e) {
+            console.error('清除缓存底图失败:', e);
+            showAlert('清除缓存底图失败');
+        }
+    }
+
     // ===================== 工具函数 =====================
+
+    // 自定义多边形中心点计算函数（替代 AMap.GeometryUtil.getRingCenter）
+    function calculatePolygonCenter(path) {
+        console.log('calculatePolygonCenter 输入:', path);
+        
+        if (!path || path.length === 0) {
+            console.warn('⚠️ calculatePolygonCenter: 路径为空');
+            return null;
+        }
+        
+        let sumLng = 0;
+        let sumLat = 0;
+        let validCount = 0;
+        
+        // 计算所有顶点的坐标平均值（处理多种格式）
+        path.forEach(point => {
+            let lng, lat;
+            
+            // 处理 AMap.LngLat 对象
+            if (point && typeof point.getLng === 'function') {
+                lng = point.getLng();
+                lat = point.getLat();
+            }
+            // 处理 {lng, lat} 对象
+            else if (point && typeof point.lng === 'number' && typeof point.lat === 'number') {
+                lng = point.lng;
+                lat = point.lat;
+            }
+            // 处理 [lng, lat] 数组
+            else if (Array.isArray(point) && point.length >= 2) {
+                lng = point[0];
+                lat = point[1];
+            }
+            // 处理其他格式
+            else {
+                console.warn('⚠️ calculatePolygonCenter: 未知的点格式', point);
+                return;
+            }
+            
+            // 检查坐标是否有效
+            if (!isNaN(lng) && !isNaN(lat) && typeof lng === 'number' && typeof lat === 'number') {
+                sumLng += lng;
+                sumLat += lat;
+                validCount++;
+            }
+        });
+        
+        // 如果没有有效点，返回null
+        if (validCount === 0) {
+            console.warn('⚠️ calculatePolygonCenter: 没有有效坐标点');
+            return null;
+        }
+        
+        const centerLng = sumLng / validCount;
+        const centerLat = sumLat / validCount;
+        
+        console.log('calculatePolygonCenter 结果:', { lng: centerLng, lat: centerLat });
+        
+        // 返回 AMap.LngLat 对象
+        return new AMap.LngLat(centerLng, centerLat);
+    }
     function toggleSatellite() {
         if (!state.satelliteLayer) state.satelliteLayer = new AMap.TileLayer.Satellite();
         const on = !!state.satelliteLayer.getMap();
