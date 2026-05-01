@@ -1186,7 +1186,7 @@
                 return;
             }
             // extensions: 'all' 极其重要，它能返回 AOI (Area of Interest) 边界数据
-            const ps = new AMap.PlaceSearch({ pageSize: 30, extensions: 'all' });
+            const ps = new AMap.PlaceSearch({ pageSize: 5, extensions: 'all' });
             ps.searchNearBy(keyword, [center.lng, center.lat], radius, (status, result) => {
                 console.log(`搜索结果 [${keyword}]:`, status, result);
                 if (status !== 'complete' || result?.info !== 'OK') {
@@ -1272,14 +1272,20 @@
         
         try {
             const radius = 5000;
-            // 只搜索宠物相关信息，区域划分完全依赖手动标注
-            const [h, s, p, g, c] = await Promise.all([
-                searchNearBy('宠物医院|宠物诊所|动物医疗', 'hospital', centerPoint, radius),
-                searchNearBy('宠物店|宠物用品|水族馆', 'shop', centerPoint, radius),
-                searchNearBy('公园|绿地|广场|森林公园', 'park_poi', centerPoint, radius),
-                searchNearBy('宠物美容|宠物洗澡', 'grooming', centerPoint, radius),
-                searchNearBy('宠物咖啡馆|猫咖|狗咖', 'cafe', centerPoint, radius)
-            ]);
+            // 顺序搜索宠物相关信息，减少并发压力，每次最多5个结果
+            const h = await searchNearBy('宠物医院|宠物诊所|动物医疗', 'hospital', centerPoint, radius);
+            await delay(800); // 800ms 间隔，避免频繁请求
+            
+            const s = await searchNearBy('宠物店|宠物用品|水族馆', 'shop', centerPoint, radius);
+            await delay(800);
+            
+            const p = await searchNearBy('公园|绿地|广场|森林公园', 'park_poi', centerPoint, radius);
+            await delay(800);
+            
+            const g = await searchNearBy('宠物美容|宠物洗澡', 'grooming', centerPoint, radius);
+            await delay(800);
+            
+            const c = await searchNearBy('宠物咖啡馆|猫咖|狗咖', 'cafe', centerPoint, radius);
             
             let real = [...h, ...s, ...g, ...c];
             const newPois = real.filter(poi => !state.seenPoiIds.has(poi.id));
@@ -1298,6 +1304,10 @@
         } finally {
             state.realLoading = false;
         }
+    }
+    
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     function updatePFIEnhanced(hospitalCount, parkCount) {
@@ -1361,7 +1371,7 @@
         state.searchTimer = setTimeout(() => {
             const center = map.getCenter();
             loadRealPois(center);
-        }, 1000); // 1秒防抖，防止频繁请求
+        }, 3000); // 3秒防抖，防止频繁请求
     }
 
     // 辅助函数：根据中心点生成一个近似圆形的路径（用于模拟真实围栏）
@@ -2539,7 +2549,7 @@
             ).map(p => ({ ...p, isLocal: true })).slice(0, 5);
 
             // 2. 同时发起高德云端搜索
-            const ps = new AMap.PlaceSearch({ pageSize: 15, extensions: 'all' });
+            const ps = new AMap.PlaceSearch({ pageSize: 5, extensions: 'all' });
             // 增强查询词
             const query = (value.includes('宠物') || value.includes('医院') || value.includes('店')) ? value : `宠物 ${value}`;
             
@@ -2588,7 +2598,7 @@
                     return scoreB - scoreA;
                 });
 
-                renderSearchDropdown(uniqueResults.slice(0, 10));
+                renderSearchDropdown(uniqueResults.slice(0, 5));
             });
         }, 300);
     }
